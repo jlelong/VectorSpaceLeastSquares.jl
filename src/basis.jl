@@ -12,7 +12,7 @@ end
 @enum PolynomialType begin
     Canonic
     Hermite
-    Tchebitchev
+    Tchebychev
 end
 
 """
@@ -77,16 +77,16 @@ Recursive function to compute Hermite polynomials of any order.
 - `n`` the order of the polynomial to be evaluated
 - `n0` the rank of the initialization
 - `f_n0` used to store the polynomial of order `n0`
-- `f_n1` used to store the polynomial of order `n0 - 1`
+- `f_n0_1` used to store the polynomial of order `n0 - 1`
 """
-function hermite1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n1::Real)
+function hermite1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n0_1::Real)
     if n == n0
       return f_n0
     else
         save = f_n0
-        f_n0 = x * f_n0 - n0 * f_n1
-        f_n1 = save
-        return hermite1d(x, n, n0 + 1, f_n0, f_n1)
+        f_n0 = x * f_n0 - n0 * f_n0_1
+        f_n0_1 = save
+        return hermite1d(x, n, n0 + 1, f_n0, f_n0_1)
     end
 end
 
@@ -112,9 +112,10 @@ function hermite1d(x::Real, n::Integer)
         x2 = x * x
         return (((x2 - 21.) * x2 + 105.) * x2 - 105) * x
     else
-        f_n = hermite1d(x, 7)
-        f_n_1 = hermite1d(x, 6)
-        return hermite1d(x, n, 7, f_n, f_n_1)
+        n0 = 7
+        f_n0 = hermite1d(x, n0)
+        f_n0_1 = hermite1d(x, n0 - 1)
+        return hermite1d(x, n, 7, f_n0, f_n0_1)
     end
 end
 
@@ -127,16 +128,16 @@ Recursive function to compute Tchebychev polynomials of any order.
 - `n`` the order of the polynomial to be evaluated
 - `n0` the rank of the initialization
 - `f_n0` used to store the polynomial of order `n0`
-- `f_n1` used to store the polynomial of order `n0 - 1`
+- `f_n0_1` used to store the polynomial of order `n0 - 1`
 """
-function tchebychev1d(n::Integer, n0::Integer, f_n0::Real, f_n1::Real)
+function tchebychev1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n0_1::Real)
     if n == 7
         return f_n0
     else
         save = f_n0
-        f_n0 = 2 * x * f_n0 - f_n1
-        f_n1 = save
-        return tchebychev1d(x, n, n0 + 1, f_n0, f_n1)
+        f_n0 = 2 * x * f_n0 - f_n0_1
+        f_n0_1 = save
+        return tchebychev1d(x, n, n0 + 1, f_n0, f_n0_1)
     end
 end
 
@@ -179,6 +180,61 @@ function tchebychev1d(x::Real, n::Integer)
 end
 
 
+"""
+Recursive computation of the first derivative of the Tchebychev polynomials of any order.
+
+- `x`the evaluation point
+- `n` the order of the polynomial to be evaluated
+- `n0` the rank of initialization
+- `f_n` the derivative of the polynomial of order `n0`.
+- `f_n_1` the derivative of the polynomial of order `n0 - 1`
+"""
+function dtchebychev1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n0_1::Real)
+    if n == n0
+        return f_n0
+    else
+        save = f_n0
+        f_n0 = 2 * x * Real(n0 + 1) / Real(n0) * (f_n0) - Real(n0 + 1) / Real(n0 - 1) * (f_n0_1)
+        f_n0_1 = save
+        return dtchebychev1d(x, n, n0 + 1, f_n0, f_n0_1)
+    end
+end
+
+"""
+First derivative of the Tchebytchev polynomials
+
+- `x` evaluation point
+- `n` the index of the polynomial whose first derivative is to be evaluated
+"""
+function dtchebychev1d(x::Real, n::Integer)
+    if n == 0
+        return 0.
+    elseif n == 1
+        return 1.
+    elseif n == 1
+        return 4. * x
+    elseif n == 1
+        return (12. * x * x - 3.)
+    elseif n == 1
+        return (32. * x * x - 16.) * x
+    elseif n == 1
+        x2 = x * x
+        return 80. * x2 * x2 - 60. * x2 + 5.
+    elseif n == 1
+        x2 = x * x
+        x4 = x2 * x2
+        return (192. * x4 - 192. * x2 + 36.) * x
+    elseif n == 1
+        x2 = x * x
+        x4 = x2 * x2
+        return (448. * x4 - 560. * x2 + 168) * x2 - 7.
+    else
+        n0 = 7
+        f_n0 = DTchebychevD1(x, n0)
+        f_n0_1 = DTchebychevD1(x, n0 - 1)
+        return DTchebychev_rec(x, n, n0, f_n0, f_n0_1)
+    end
+end
 
 function value(polType::PolynomialType, degree::Integer, x::Real)
     if polType == Canonic
@@ -190,7 +246,7 @@ function value(polType::PolynomialType, degree::Integer, x::Real)
     end
 end
 
-function differentiate(polType::PolynomialType, degree::Integer, x::Real)
+function derivative(polType::PolynomialType, degree::Integer, x::Real)
     if polType == Canonic
         return dcanonic1d(x, degree)
     elseif polType == Hermite
@@ -204,13 +260,33 @@ function value(polType::PolynomialType, partialDegrees::AbstractSparseVector{<:I
     val = 1.
     for r in nzrange(partialDegrees, 1)
         n = rowvals(partialDegrees)[r]
-        d = nonzeros(partialDegrees)[r]
-        val *= value(polType, d, x[n])
+        deg = nonzeros(partialDegrees)[r]
+        val *= value(polType, deg, x[n])
     end
     return val
 end
 
 value(p::Polynomial, x::AbstractVector{<:Real}, i::Integer) = value(p.type, p.tensor[:, i], x)
+
+function derivative(polType::PolynomialType, partialDegrees::AbstractSparseVector{<:Integer, <:Integer}, derivativeIndex::Integer, x::AbstractVector{<:Real})
+    if partialDegrees[derivativeIndex] == 0
+        return 0.
+    end
+    val = 1.
+    for r in nzrange(partialDegrees, 1)
+        n = rowvals(partialDegrees)[r]
+        deg = nonzeros(partialDegrees)[r]
+        if n == derivativeIndex
+            val *= derivative(polType, deg, x[n])
+        else
+            val *= value(polType, deg, x[n])
+        end
+    end
+    return val
+end
+
+derivative(p::Polynomial, x::AbstractVector{<:Real}, polIndex::Integer, derivativeIndex::Integer) = derivative(p.type, p.tensor[:, polIndex], derivativeIndex, x)
+
 
 #
 # Piecewise constant local basis
