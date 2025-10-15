@@ -1,4 +1,5 @@
 using SparseArrays
+import Base: size
 
 abstract type AbstractBasis end
 function nVariates(::AbstractBasis) end
