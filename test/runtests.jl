@@ -32,6 +32,21 @@ function evalPolynomial(polType::PolynomialType, degree, nVariates, x::AbstractV
     return true
 end
 
+function differentiatePolynomial(polType::PolynomialType, degree, nVariates, partial::Integer, x::AbstractVector{<:Real})
+    @assert length(x) == nVariates "x must have size nVariates"
+    p = Polynomial(degree, nVariates, polType)
+    fullTensor = Array(p.tensor)
+    for j in 1:size(p)
+        val1 = derivative(p, x, j, partial)
+        val2 = prod([i == partial ? derivative(p.type, fullTensor[i, j], x[i]) : value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates])
+        if !compeps(val1, val2, 1E-10)
+            return false
+        end
+    end
+    return true
+end
+
+
 @testset "Evaluate 1d polynomials" begin
     @test testPol1d(4, 3., VectorSpaceLeastSquares.hermite1d)
     @test testPol1d(2, 3., VectorSpaceLeastSquares.hermite1d)
@@ -63,5 +78,11 @@ end
 end
 
 @testset "Differentiate multivariate polynomials" begin
-    
+    degree = 4
+    nVariates = 5
+    partial = 3 # must be smaller than nVariates
+    x = randn(nVariates)
+    differentiatePolynomial(Canonic, 4, nVariates, partial, x)
+    differentiatePolynomial(Hermite, 4, nVariates, partial, x)
+    differentiatePolynomial(Tchebychev, 4, nVariates, partial, x)
 end
