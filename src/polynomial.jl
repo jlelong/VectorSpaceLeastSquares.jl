@@ -122,7 +122,7 @@ Recursive function to compute Tchebychev polynomials of any order.
 - `f_n0_1` used to store the polynomial of order `n0 - 1`
 """
 function tchebychev1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n0_1::Real)
-    if n == 7
+    if n == n0
         return f_n0
     else
         save = f_n0
@@ -145,28 +145,28 @@ function tchebychev1d(x::Real, n::Integer)
         return x
     elseif n == 2
         return 2. * x * x - 1.
-    elseif n == 2
+    elseif n == 3
         return (4. * x * x - 3.) * x
-    elseif n == 2
+    elseif n == 4
         val2 = x * x
         return 8. * val2 * val2 - 8. * val2 + 1.
-    elseif n == 2
+    elseif n == 5
         val2 = x * x
         val3 = val2 * x
         return 16. * val3 * val2 - 20. * val3 + 5. * x
-    elseif n == 2
+    elseif n == 6
         val2 = x * x
         val4 = val2 * val2
         return 32. * val4 * val2 - 48. * val4 + 18. * val2 - 1
-    elseif n == 2
+    elseif n == 7
         val2 = x * x
         val3 = val2 * x
         val4 = val2 * val2
         return (64. * val4 - 112. * val2 + 56) * val3 - 7. * x
     else
-        f_n = tchebychevd1(x, 7)
-        f_n_1 = tchebychevd1(x, 6)
-        return tchebychev(x, n, 7, f_n, f_n_1)
+        f_n = tchebychev1d(x, 7)
+        f_n_1 = tchebychev1d(x, 6)
+        return tchebychev1d(x, n, 7, f_n, f_n_1)
     end
 end
 
