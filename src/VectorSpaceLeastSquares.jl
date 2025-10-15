@@ -5,5 +5,5 @@ include("basis.jl")
 
 export PolynomialType, Canonic, Hermite, Tchebychev
 export Polynomial, PiecewiseConstant, LinearTransform, AbstractBasis
-export value, nVariates, size
+export value, derivative, nVariates, size
 end
