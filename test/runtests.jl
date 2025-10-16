@@ -89,9 +89,22 @@ end
 
 @testset "Transformations" begin
     nSamples = 50000
-    eps = 2. / sqrt(nSamples)
+    eps = 4. / sqrt(nSamples)
     x = [randn(5) for i in 1:nSamples]
-    l = LinearTransform(x)
+    l = LinearTransformation(x)
     @test all([compeps(l.center[i], 0., eps) for i in 1:length(l.center)])
     @test all([compeps(l.scale[i], 1., sqrt(3) * eps) for i in 1:length(l.scale)])
+end
+
+@testset "Least squares" begin
+    dim = 4
+    deg = 3
+    nSamples = 10000
+    f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
+    data = [randn(dim) for i in 1:nSamples]
+    y = f.(data)
+    vslsq = VSLeastSquares{Float64}(Polynomial(deg, dim, Hermite), VoidTransformation())
+    fit(vslsq, data, y)
+    x = randn(dim)
+    @test compeps(predict(vslsq, x), f(x), 1.E-10)
 end

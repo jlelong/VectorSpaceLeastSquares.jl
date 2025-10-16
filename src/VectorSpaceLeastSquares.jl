@@ -5,7 +5,7 @@ include("basis.jl")
 include("leastsquares.jl")
 
 export PolynomialType, Canonic, Hermite, Tchebychev
-export Polynomial, PiecewiseConstant, LinearTransform, AbstractBasis
+export Polynomial, PiecewiseConstant, AbstractBasis
 export value, derivative, nVariates, size
-export LinearTransform, AbstractTransform, VSLeastSquares
+export LinearTransformation, AbstractTransformation, VoidTransformation, VSLeastSquares, fit, predict, getCoefficients
 end

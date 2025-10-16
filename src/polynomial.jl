@@ -51,7 +51,7 @@ end
 
 function Polynomial(degree::Integer, nVariates::Integer, type::PolynomialType)
     fullTensor = computePolynomialTensor(degree, nVariates)
-    dim = size(fullTensor, 1)
+    dim = size(fullTensor, 2)
     return Polynomial(degree, nVariates, dim, type, sparse(fullTensor))
 end
 
