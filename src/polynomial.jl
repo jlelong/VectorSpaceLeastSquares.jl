@@ -148,21 +148,21 @@ function tchebychev1d(x::Real, n::Integer)
     elseif n == 3
         return (4. * x * x - 3.) * x
     elseif n == 4
-        val2 = x * x
-        return 8. * val2 * val2 - 8. * val2 + 1.
+        x2 = x * x
+        return 8. * x2 * x2 - 8. * x2 + 1.
     elseif n == 5
-        val2 = x * x
-        val3 = val2 * x
-        return 16. * val3 * val2 - 20. * val3 + 5. * x
+        x2 = x * x
+        x3 = x2 * x
+        return 16. * x3 * x2 - 20. * x3 + 5. * x
     elseif n == 6
-        val2 = x * x
-        val4 = val2 * val2
-        return 32. * val4 * val2 - 48. * val4 + 18. * val2 - 1
+        x2 = x * x
+        x4 = x2 * x2
+        return 32. * x4 * x2 - 48. * x4 + 18. * x2 - 1
     elseif n == 7
-        val2 = x * x
-        val3 = val2 * x
-        val4 = val2 * val2
-        return (64. * val4 - 112. * val2 + 56) * val3 - 7. * x
+        x2 = x * x
+        x3 = x2 * x
+        x4 = x2 * x2
+        return (64. * x4 - 112. * x2 + 56) * x3 - 7. * x
     else
         f_n = tchebychev1d(x, 7)
         f_n_1 = tchebychev1d(x, 6)
