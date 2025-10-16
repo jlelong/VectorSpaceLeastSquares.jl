@@ -24,7 +24,7 @@ function evalPolynomial(polType::PolynomialType, degree, nVariates, x::AbstractV
     fullTensor = Array(p.tensor)
     for j in 1:size(p)
         val1 = value(p, x, j)
-        val2 = prod([value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates])
+        val2 = prod((value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates))
         if !compeps(val1, val2, 1E-10)
             return false
         end
@@ -38,7 +38,7 @@ function differentiatePolynomial(polType::PolynomialType, degree, nVariates, par
     fullTensor = Array(p.tensor)
     for j in 1:size(p)
         val1 = derivative(p, x, j, partial)
-        val2 = prod([i == partial ? derivative(p.type, fullTensor[i, j], x[i]) : value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates])
+        val2 = prod((i == partial ? derivative(p.type, fullTensor[i, j], x[i]) : value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates))
         if !compeps(val1, val2, 1E-10)
             return false
         end
@@ -72,9 +72,9 @@ end
     degree = 4
     nVariates = 5
     x = randn(nVariates)
-    evalPolynomial(Canonic, 4, nVariates, x)
-    evalPolynomial(Hermite, 4, nVariates, x)
-    evalPolynomial(Tchebychev, 4, nVariates, x)
+    @test evalPolynomial(Canonic, 4, nVariates, x)
+    @test evalPolynomial(Hermite, 4, nVariates, x)
+    @test evalPolynomial(Tchebychev, 4, nVariates, x)
 end
 
 @testset "Differentiate multivariate polynomials" begin
@@ -82,7 +82,16 @@ end
     nVariates = 5
     partial = 3 # must be smaller than nVariates
     x = randn(nVariates)
-    differentiatePolynomial(Canonic, 4, nVariates, partial, x)
-    differentiatePolynomial(Hermite, 4, nVariates, partial, x)
-    differentiatePolynomial(Tchebychev, 4, nVariates, partial, x)
+    @test differentiatePolynomial(Canonic, 4, nVariates, partial, x)
+    @test differentiatePolynomial(Hermite, 4, nVariates, partial, x)
+    @test differentiatePolynomial(Tchebychev, 4, nVariates, partial, x)
+end
+
+@testset "Transformations" begin
+    nSamples = 50000
+    eps = 2. / sqrt(nSamples)
+    x = [randn(5) for i in 1:nSamples]
+    l = LinearTransform(x)
+    @test all([compeps(l.center[i], 0., eps) for i in 1:length(l.center)])
+    @test all([compeps(l.scale[i], 1., sqrt(3) * eps) for i in 1:length(l.scale)])
 end
