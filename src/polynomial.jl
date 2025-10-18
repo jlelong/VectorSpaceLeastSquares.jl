@@ -1,4 +1,5 @@
 # Polynomial basis
+using SparseArrays: getcolptr, getrowval, nonzeros, rowvals
 
 @enum PolynomialType begin
     Canonic
@@ -15,11 +16,11 @@ Represent a multivariate polynomial
 - `tensor`: the sparse tensor representation of the polynomial. Polynomials are stored by column
 """
 struct Polynomial <: AbstractBasis
-    degree::Integer
-    nVariates::Integer
-    size::Integer
+    degree::Int64
+    nVariates::Int64
+    size::Int64
     type::PolynomialType
-    tensor::SparseMatrixCSC{<:Integer, <:Integer} # Store polynomials by column
+    tensor::SparseMatrixCSC{Int64, Int64} # Store polynomials by column
 end
 
 """
@@ -56,7 +57,9 @@ function Polynomial(degree::Integer, nVariates::Integer, type::PolynomialType)
 end
 
 nVariates(p::Polynomial) = p.nVariates
-size(p::Polynomial) = p.size
+length(p::Polynomial) = p.size
+type(p::Polynomial) = p.type
+tensor(p::Polynomial) = p.tensor
 
 canonic1d(x::Real, n::Integer) = x^n
 dcanonic1d(x::Real, n::Integer) = n == 0 ? 0. : x^(n-1)
@@ -258,24 +261,18 @@ function derivative(polType::PolynomialType, degree::Integer, x::Real)
 end
 
 """
-Evaluate a multivariate polynomial of type `polType` at `x`.
-
-- `partialDegrees` a sparse vector describing the partial degrees
+Evaluate the `i`-th function of a Polynomial basis `p` at point `x`
 """
-function value(polType::PolynomialType, partialDegrees::AbstractSparseVector{<:Integer, <:Integer}, x::AbstractVector{<:Real})
+function value(p::Polynomial, x::AbstractVector{<:Real}, i::Integer)
     val = 1.
-    for r in nzrange(partialDegrees, 1)
-        n = rowvals(partialDegrees)[r]
-        deg = nonzeros(partialDegrees)[r]
-        val *= value(polType, deg, x[n])
+    T = tensor(p)
+    for r in nzrange(T, i)
+        n = rowvals(T)[r]
+        deg = nonzeros(T)[r]
+        val = val * value(type(p), deg, x[n])
     end
     return val
 end
-
-"""
-Evaluate the `i`-th function of a Polynomial basis `p` at point `x`
-"""
-value(p::Polynomial, x::AbstractVector{<:Real}, i::Integer) = value(p.type, p.tensor[:, i], x)
 
 """
 Evaluate the first derivative of a multivariate polynomial of type `polType` at `x`.
@@ -303,5 +300,5 @@ end
 """
 Evaluate the first partial derivative w.r.t variable `derivativeIndex` of the `polIndex`-th member of the polynomial basis `p`
 """
-derivative(p::Polynomial, x::AbstractVector{<:Real}, polIndex::Integer, derivativeIndex::Integer) = derivative(p.type, p.tensor[:, polIndex], derivativeIndex, x)
+derivative(p::Polynomial, x::AbstractVector{<:Real}, polIndex::Integer, derivativeIndex::Integer) = derivative(type(p), tensor(p)[:, polIndex], derivativeIndex, x)
 

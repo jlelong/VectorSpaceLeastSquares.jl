@@ -1,5 +1,5 @@
 using SparseArrays
-import Base: size
+import Base: length
 
 abstract type AbstractBasis end
 
@@ -10,7 +10,11 @@ function nVariates(B::AbstractBasis) end
 """
 Return the number of elements in the basis
 """
-function size(B::AbstractBasis) end
+function length(B::AbstractBasis) end
+"""
+Return the internal basis type
+"""
+function type(B::AbstractBasis) end
 """
 Compute the value of the `index`-th basis function at point `x`
 """

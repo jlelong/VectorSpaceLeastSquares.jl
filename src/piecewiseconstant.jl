@@ -14,4 +14,4 @@ function PiecewiseConstant(nVariates::Integer, nIntervals::Integer)
 end
 
 nVariates(p::PiecewiseConstant) = p.nVariates
-size(p::PiecewiseConstant) = p.size
+length(p::PiecewiseConstant) = p.size

@@ -8,7 +8,7 @@ function compeps(a::Real, b::Real, eps::Real)
 end
 
 function createPolynomial()
-    return VectorSpaceLeastSquares.Polynomial(2, 3, VectorSpaceLeastSquares.Canonic).tensor == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
+    return tensor(VectorSpaceLeastSquares.Polynomial(2, 3, VectorSpaceLeastSquares.Canonic)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
 end
 
 function testPol1d(degree::Integer, x::Real, func1d::Function)
@@ -21,10 +21,10 @@ end
 function evalPolynomial(polType::PolynomialType, degree, nVariates, x::AbstractVector{<:Real})
     @assert length(x) == nVariates "x must have size nVariates"
     p = Polynomial(degree, nVariates, polType)
-    fullTensor = Array(p.tensor)
-    for j in 1:size(p)
+    fullTensor = Array(tensor(p))
+    for j in 1:length(p)
         val1 = value(p, x, j)
-        val2 = prod((value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates))
+        val2 = prod((value(type(p), fullTensor[i, j], x[i]) for i in 1:nVariates))
         if !compeps(val1, val2, 1E-10)
             return false
         end
@@ -35,10 +35,10 @@ end
 function differentiatePolynomial(polType::PolynomialType, degree, nVariates, partial::Integer, x::AbstractVector{<:Real})
     @assert length(x) == nVariates "x must have size nVariates"
     p = Polynomial(degree, nVariates, polType)
-    fullTensor = Array(p.tensor)
-    for j in 1:size(p)
+    fullTensor = Array(tensor(p))
+    for j in 1:length(p)
         val1 = derivative(p, x, j, partial)
-        val2 = prod((i == partial ? derivative(p.type, fullTensor[i, j], x[i]) : value(p.type, fullTensor[i, j], x[i]) for i in 1:nVariates))
+        val2 = prod((i == partial ? derivative(type(p), fullTensor[i, j], x[i]) : value(type(p), fullTensor[i, j], x[i]) for i in 1:nVariates))
         if !compeps(val1, val2, 1E-10)
             return false
         end
@@ -96,15 +96,20 @@ end
     @test all([compeps(l.scale[i], 1., sqrt(3) * eps) for i in 1:length(l.scale)])
 end
 
-@testset "Least squares" begin
+function testFitVoidTransformation(T::Type, eps)
     dim = 4
     deg = 3
     nSamples = 10000
     f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
-    data = [randn(dim) for i in 1:nSamples]
+    data = [randn(T, dim) for i in 1:nSamples]
     y = f.(data)
-    vslsq = VSLeastSquares{Float64}(Polynomial(deg, dim, Hermite), VoidTransformation())
+    vslsq = VSLeastSquares(Polynomial(deg, dim, Hermite), VoidTransformation(), T)
     fit(vslsq, data, y)
-    x = randn(dim)
-    @test compeps(predict(vslsq, x), f(x), 1.E-10)
+    x = randn(T, dim)
+    return compeps(predict(vslsq, x), f(x), T(eps))
+end
+
+@testset "Least squares" begin
+    @test testFitVoidTransformation(Float32, 1.E-3)
+    @test testFitVoidTransformation(Float64, 1.E-10)
 end

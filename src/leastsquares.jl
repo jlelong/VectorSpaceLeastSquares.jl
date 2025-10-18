@@ -3,7 +3,7 @@ abstract type AbstractTransformation end
 struct VoidTransformation <: AbstractTransformation end
 
 function apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real}) end
-function apply!(t::VoidTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real}) 
+function apply!(t::VoidTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
     tx .= x
 end
 
@@ -14,18 +14,6 @@ end
 
 function apply!(t::LinearTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
     tx .= (x .- t.center) .* scale
-end
-
-
-"""
-Create a void linear transformation: `center `= 0 and `scale` = 1
-"""
-function LinearTransformation(dim::Integer, T::Type=Float64)
-    center = Vector{T}(undef, dim)
-    scale = Vector{T}(undef, dim)
-    center .= 0
-    scale .= 1
-    LinearTransformation(scale, center)
 end
 
 """
@@ -54,52 +42,54 @@ end
 
 abstract type NonLinearTransform <: AbstractTransformation end
 
-struct VSLeastSquares{T<:Real}
-    basis::AbstractBasis
-    transformation::AbstractTransformation
-    coefficients::Vector{T}
-    _transformed_data::Vector{<:Real}
+struct VSLeastSquares{Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+    basis::Tb
+    transformation::Tt
+    coefficients::Vector{Td}
+    _transformed_data::Vector{Td}
 end
 
-function VSLeastSquares{T}(basis::AbstractBasis, transform::AbstractTransformation) where T<:Real
-    coefficients = Vector{T}(undef, size(basis))
-    transformed_data = Vector{T}(undef, nVariates(basis))
-    VSLeastSquares{T}(basis, transform, coefficients, transformed_data)
+function VSLeastSquares(basis::Tb, transform::Tt, Td::Type=Float64) where {Tb<:AbstractBasis, Tt<:AbstractTransformation}
+    coefficients = Vector{Td}(undef, length(basis))
+    transformed_data = Vector{Td}(undef, nVariates(basis))
+    VSLeastSquares{Tb, Tt, Td}(basis, transform, coefficients, transformed_data)
 end
 
-VSLeastSquares{T}(basis::AbstractBasis) where T<:Real = VSLeastSquares{T}(basis, VoidTransformation())
+VSLeastSquares(basis::Tb, Td::Type=Float64) where Tb<:AbstractBasis = VSLeastSquares{Td}(basis, VoidTransformation())
 
 
-size(vslsq::VSLeastSquares) = size(vslsq.basis)
-getCoefficients(vslsq::VSLeastSquares) = vslsq.coefficients
-getBasis(vslsq::VSLeastSquares) = vslsq.basis
+length(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = Int64(length(vslsq.basis))
+getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
+getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.basis
 
-function fit(vslsq::VSLeastSquares{T}, x::AbstractVector{<:AbstractVector{T}}, y::AbstractVector{T}) where T<:Real
+function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
-    A = Matrix{T}(undef, size(vslsq), size(vslsq))
-    b = Vector{T}(undef, size(vslsq))
-    phi_k = Vector{T}(undef, size(vslsq))
+    A = Matrix{Td}(undef, length(vslsq), length(vslsq))
+    b = Vector{Td}(undef, length(vslsq))
+    phi_k = Vector{Td}(undef, length(vslsq))
     A .= 0.
     b .= 0.
     phi_k .= 0
     for i in 1:nSamples
         apply!(vslsq.transformation, vslsq._transformed_data, x[i])
-        for k in 1:size(vslsq)
+        for k in 1:length(vslsq)
             phi_k[k] = value(vslsq.basis, vslsq._transformed_data, k)
             b[k] += phi_k[k] * y[i]
         end
-        ger!(1., phi_k, phi_k, A)
+        ger!(Td(1.), phi_k, phi_k, A)
     end
     vslsq.coefficients .= A \ b
 end
 
-function predict(vslsq::VSLeastSquares{T}, x::AbstractVector{T}) where T<:Real
+function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
     apply!(vslsq.transformation, vslsq._transformed_data, x)
-    for i in 1:size(vslsq)
-        val += coefficients[i] * value(basis, vslsq._transformed_data, i)
+    for i in 1:length(vslsq)
+        v = value(basis, vslsq._transformed_data, i)
+        c = coefficients[i]
+        val += c * v
     end
     return val
 end
