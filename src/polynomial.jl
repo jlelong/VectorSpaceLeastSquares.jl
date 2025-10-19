@@ -241,7 +241,7 @@ function value(polType::PolynomialType, degree::Integer, x::Real)
     elseif polType == Tchebychev
         return tchebychev1d(x, degree)
     else
-        error("Not implemented")
+        error("Unknown polynomial type: $polType")
     end
 end
 
@@ -256,7 +256,7 @@ function derivative(polType::PolynomialType, degree::Integer, x::Real)
     elseif polType == Tchebychev
         return dtchebychev1d(x, degree)
     else
-        error("Not implemented")
+        error("Unknown polynomial type: $polType")
     end
 end
 
