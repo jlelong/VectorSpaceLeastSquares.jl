@@ -36,7 +36,7 @@ function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:R
         end
     end
     center .= center ./ nSamples
-    squares .= (squares ./ nSamples .- center.^2)
+    squares .= 1. ./ sqrt.((squares ./ nSamples .- center.^2))
     LinearTransformation(squares, center)
 end
 
@@ -62,6 +62,9 @@ length(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:Abstract
 getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
 getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.basis
 
+"""
+Solve the least squares problem
+"""
 function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
     A = Matrix{Td}(undef, length(vslsq), length(vslsq))
@@ -81,6 +84,11 @@ function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVect
     vslsq.coefficients .= A \ b
 end
 
+"""
+Compute the value predicted by the least squares problem.
+
+The method `fit` must have been called before.
+"""
 function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     val = 0.
     coefficients = getCoefficients(vslsq)
