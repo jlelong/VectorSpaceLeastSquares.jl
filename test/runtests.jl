@@ -8,7 +8,7 @@ function compeps(a::Real, b::Real, eps::Real)
 end
 
 function createPolynomial()
-    return tensor(VectorSpaceLeastSquares.Polynomial(2, 3, VectorSpaceLeastSquares.Canonic)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
+    return tensor(PolynomialBasis(2, 3, Canonic)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
 end
 
 function testPol1d(degree::Integer, x::Real, func1d::Function)
@@ -20,7 +20,7 @@ end
 
 function evalPolynomial(polType::PolynomialType, degree, nVariates, x::AbstractVector{<:Real})
     @assert length(x) == nVariates "x must have size nVariates"
-    p = Polynomial(degree, nVariates, polType)
+    p = PolynomialBasis(degree, nVariates, polType)
     fullTensor = Array(tensor(p))
     for j in 1:length(p)
         val1 = value(p, x, j)
@@ -34,7 +34,7 @@ end
 
 function differentiatePolynomial(polType::PolynomialType, degree, nVariates, partial::Integer, x::AbstractVector{<:Real})
     @assert length(x) == nVariates "x must have size nVariates"
-    p = Polynomial(degree, nVariates, polType)
+    p = PolynomialBasis(degree, nVariates, polType)
     fullTensor = Array(tensor(p))
     for j in 1:length(p)
         val1 = derivative(p, x, j, partial)
@@ -103,7 +103,7 @@ function testFitVoidTransformation(T::Type, eps)
     f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
     data = [randn(T, dim) for i in 1:nSamples]
     y = f.(data)
-    vslsq = VSLeastSquares(Polynomial(deg, dim, Hermite), VoidTransformation(), T)
+    vslsq = VSLeastSquares(PolynomialBasis(deg, dim, Hermite), VoidTransformation(), T)
     fit(vslsq, data, y)
     x = randn(T, dim)
     return compeps(predict(vslsq, x), f(x), T(eps))
