@@ -26,7 +26,7 @@ The function `apply!` applies the transformation to `x` and stores the result in
 
 Currently two transformations are implemented
 
-- `VoidTransformation` which does nothing: $\varphi(x) = $.
+- `VoidTransformation` which does nothing: $\varphi(x) = x$.
 - `LinearTransformation` which corresponds to $\varphi(x) = \sigma (x - \mu)$
 
     ```julia
