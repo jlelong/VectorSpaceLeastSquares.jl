@@ -58,8 +58,8 @@ end
 
 nVariates(p::PolynomialBasis) = p.nVariates
 length(p::PolynomialBasis) = p.size
-type(p::PolynomialBasis) = p.type
-tensor(p::PolynomialBasis) = p.tensor
+getType(p::PolynomialBasis) = p.type
+getTensor(p::PolynomialBasis) = p.tensor
 
 canonic1d(x::Real, n::Integer) = x^n
 dcanonic1d(x::Real, n::Integer) = n == 0 ? 0. : x^(n-1)
@@ -265,11 +265,11 @@ Evaluate the `i`-th function of a Polynomial basis `p` at point `x`
 """
 function value(p::PolynomialBasis, x::AbstractVector{<:Real}, i::Integer)
     val = 1.
-    T = tensor(p)
+    T = getTensor(p)
     for r in nzrange(T, i)
         n = rowvals(T)[r]
         deg = nonzeros(T)[r]
-        val = val * value(type(p), deg, x[n])
+        val = val * value(getType(p), deg, x[n])
     end
     return val
 end
@@ -279,7 +279,7 @@ end
 Evaluate the first partial derivative w.r.t variable `derivativeIndex` of the `polIndex`-th member of the polynomial basis `p`
 """
 function derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex::Ti) where {Td<:Real, Ti<:Integer}
-    T = tensor(p)
+    T = getTensor(p)
     if T[derivativeIndex, polIndex] == 0
         return 0.
     end
@@ -288,9 +288,9 @@ function derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, der
         n = rowvals(T)[r]
         deg = nonzeros(T)[r]
         if n == derivativeIndex
-            val *= derivative(type(p), deg, x[n])
+            val *= derivative(getType(p), deg, x[n])
         else
-            val *= value(type(p), deg, x[n])
+            val *= value(getType(p), deg, x[n])
         end
     end
     return val

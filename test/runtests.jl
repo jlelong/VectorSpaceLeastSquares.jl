@@ -13,7 +13,7 @@ function compeps(a::Vector{<:Real}, b::Vector{<:Real}, eps::Real)
 end
 
 function createPolynomial()
-    return tensor(PolynomialBasis(2, 3, Canonic)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
+    return getTensor(PolynomialBasis(2, 3, Canonic)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
 end
 
 function testPol1d(degree::Integer, x::Real, func1d::Function)
@@ -26,10 +26,10 @@ end
 function evalPolynomial(polType::PolynomialType, degree, nVariates, x::AbstractVector{<:Real})
     @assert length(x) == nVariates "x must have size nVariates"
     p = PolynomialBasis(degree, nVariates, polType)
-    fullTensor = Array(tensor(p))
+    fullTensor = Array(getTensor(p))
     for j in 1:length(p)
         val1 = value(p, x, j)
-        val2 = prod((value(type(p), fullTensor[i, j], x[i]) for i in 1:nVariates))
+        val2 = prod((value(getType(p), fullTensor[i, j], x[i]) for i in 1:nVariates))
         if !compeps(val1, val2, 1E-10)
             return false
         end
@@ -40,10 +40,10 @@ end
 function differentiatePolynomial(polType::PolynomialType, degree, nVariates, partial::Integer, x::AbstractVector{<:Real})
     @assert length(x) == nVariates "x must have size nVariates"
     p = PolynomialBasis(degree, nVariates, polType)
-    fullTensor = Array(tensor(p))
+    fullTensor = Array(getTensor(p))
     for j in 1:length(p)
         val1 = derivative(p, x, j, partial)
-        val2 = prod((i == partial ? derivative(type(p), fullTensor[i, j], x[i]) : value(type(p), fullTensor[i, j], x[i]) for i in 1:nVariates))
+        val2 = prod((i == partial ? derivative(getType(p), fullTensor[i, j], x[i]) : value(getType(p), fullTensor[i, j], x[i]) for i in 1:nVariates))
         if !compeps(val1, val2, 1E-10)
             return false
         end

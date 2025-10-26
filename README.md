@@ -92,7 +92,7 @@ length(B::AbstractBasis)
 """
 Return the internal basis type
 """
-type(B::AbstractBasis)
+getType(B::AbstractBasis)
 """
 Compute the value of the `index`-th basis function at point `x`
 """
