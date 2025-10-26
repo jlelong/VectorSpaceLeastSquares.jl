@@ -274,31 +274,25 @@ function value(p::PolynomialBasis, x::AbstractVector{<:Real}, i::Integer)
     return val
 end
 
-"""
-Evaluate the first derivative of a multivariate polynomial of type `polType` at `x`.
-
-- `partialDegrees` is a sparse vector describing the partial degrees
-- `derivativeIndex` is the index of the partial derivative
-"""
-function derivative(polType::PolynomialType, partialDegrees::AbstractSparseVector{Ti, Ti}, derivativeIndex::Ti, x::AbstractVector{Td}) where {Ti<:Integer, Td<:Real}
-    if partialDegrees[derivativeIndex] == 0
-        return 0.
-    end
-    val = 1.
-    for r in nzrange(partialDegrees, 1)
-        n = rowvals(partialDegrees)[r]
-        deg = nonzeros(partialDegrees)[r]
-        if n == derivativeIndex
-            val *= derivative(polType, deg, x[n])
-        else
-            val *= value(polType, deg, x[n])
-        end
-    end
-    return val
-end
 
 """
 Evaluate the first partial derivative w.r.t variable `derivativeIndex` of the `polIndex`-th member of the polynomial basis `p`
 """
-derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex::Ti) where {Td<:Real, Ti<:Integer} = derivative(type(p), tensor(p)[:, polIndex], derivativeIndex, x)
+function derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex::Ti) where {Td<:Real, Ti<:Integer}
+    T = tensor(p)
+    if T[derivativeIndex, polIndex] == 0
+        return 0.
+    end
+    val = 1.
+    for r in nzrange(T, polIndex)
+        n = rowvals(T)[r]
+        deg = nonzeros(T)[r]
+        if n == derivativeIndex
+            val *= derivative(type(p), deg, x[n])
+        else
+            val *= value(type(p), deg, x[n])
+        end
+    end
+    return val
+end
 
