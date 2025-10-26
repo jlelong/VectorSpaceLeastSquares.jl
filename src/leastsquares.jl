@@ -71,14 +71,14 @@ struct VSLeastSquares{Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     _transformed_data::Vector{Td}
 end
 
-function VSLeastSquares(basis::Tb, transform::Tt, Td::Type=Float64) where {Tb<:AbstractBasis, Tt<:AbstractTransformation}
+"""
+Create a VSLeastSquares object from `basis` and `transform` and capable of handling `Td` typed data.
+"""
+function VSLeastSquares(basis::Tb, transform::Tt=VoidTransformation(), Td::Type=Float64) where {Tb<:AbstractBasis, Tt<:AbstractTransformation}
     coefficients = Vector{Td}(undef, length(basis))
     transformed_data = Vector{Td}(undef, nVariates(basis))
     VSLeastSquares{Tb, Tt, Td}(basis, transform, coefficients, transformed_data)
 end
-
-VSLeastSquares(basis::Tb, Td::Type=Float64) where Tb<:AbstractBasis = VSLeastSquares{Td}(basis, VoidTransformation())
-
 
 length(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = Int64(length(vslsq.basis))
 getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
