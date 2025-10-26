@@ -2,19 +2,41 @@ using LinearAlgebra.BLAS: ger!
 abstract type AbstractTransformation end
 struct VoidTransformation <: AbstractTransformation end
 
+"""
+Apply the transformation `t` to `x` ans store the result in `tx`
+"""
 function apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real}) end
+
+"""
+Compute `\\partial_{x_j} t_i(x)`
+"""
+function jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer) end
+
 function apply!(t::VoidTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
     tx .= x
 end
 
-struct LinearTransformation <: AbstractTransformation
-    scale::Vector{<:Real}
-    center::Vector{<:Real}
+function jacobian(t::VoidTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer)
+    return Int(i == j)
 end
 
-function apply!(t::LinearTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
-    tx .= (x .- t.center) .* scale
+struct LinearTransformation{Td} <: AbstractTransformation where Td<:Real
+    scale::Vector{Td}
+    center::Vector{Td}
 end
+
+function apply!(t::LinearTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
+    tx .= (x .- t.center) .* t.scale
+end
+
+function jacobian(t::LinearTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
+    if i != j
+        return 0.
+    else
+        return t.scale[i]
+    end
+end
+
 
 """
 Create a linear transformation by setting `center` as the empirical mean and `scale` as the inverse of the empirical standard deviation. Each entry of `x` is supposed one sample of the data
@@ -100,4 +122,36 @@ function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where
         val += c * v
     end
     return val
+end
+
+"""
+Compute the partial derivative of the prediction w.r.t to the `index` variable
+
+The method `fit` must have been called before.
+"""
+function derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+    val = 0.
+    coefficients = getCoefficients(vslsq)
+    basis = getBasis(vslsq)
+    apply!(vslsq.transformation, vslsq._transformed_data, x)
+    for i in 1:length(vslsq)
+        di = 0.
+        for j in 1:length(x)
+            dval = derivative(basis, vslsq._transformed_data, i, j)
+            dphi = jacobian(vslsq.transformation, x, j, index)
+            di += dval * dphi
+        end
+        c = coefficients[i]
+        val += c * di
+    end
+    return val
+end
+
+"""
+Compute the gradient of the prediction
+
+The method `fit` must have been called before.
+"""
+function gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+    return [derivative(vslsq, x, i) for i in 1:length(x)]
 end

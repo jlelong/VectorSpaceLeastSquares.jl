@@ -280,7 +280,7 @@ Evaluate the first derivative of a multivariate polynomial of type `polType` at 
 - `partialDegrees` is a sparse vector describing the partial degrees
 - `derivativeIndex` is the index of the partial derivative
 """
-function derivative(polType::PolynomialType, partialDegrees::AbstractSparseVector{<:Integer, <:Integer}, derivativeIndex::Integer, x::AbstractVector{<:Real})
+function derivative(polType::PolynomialType, partialDegrees::AbstractSparseVector{Ti, Ti}, derivativeIndex::Ti, x::AbstractVector{Td}) where {Ti<:Integer, Td<:Real}
     if partialDegrees[derivativeIndex] == 0
         return 0.
     end
@@ -300,5 +300,5 @@ end
 """
 Evaluate the first partial derivative w.r.t variable `derivativeIndex` of the `polIndex`-th member of the polynomial basis `p`
 """
-derivative(p::PolynomialBasis, x::AbstractVector{<:Real}, polIndex::Integer, derivativeIndex::Integer) = derivative(type(p), tensor(p)[:, polIndex], derivativeIndex, x)
+derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex::Ti) where {Td<:Real, Ti<:Integer} = derivative(type(p), tensor(p)[:, polIndex], derivativeIndex, x)
 

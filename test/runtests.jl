@@ -7,6 +7,11 @@ function compeps(a::Real, b::Real, eps::Real)
     return abs(b - a) < eps
 end
 
+function compeps(a::Vector{<:Real}, b::Vector{<:Real}, eps::Real)
+    @assert length(a) == length(b) "a and b must have the same length"
+    return all((compeps(ai, bi, eps) for (ai, bi) in zip(a, b)))
+end
+
 function createPolynomial()
     return tensor(PolynomialBasis(2, 3, Canonic)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
 end
@@ -109,7 +114,31 @@ function testFitVoidTransformation(T::Type, eps)
     return compeps(predict(vslsq, x), f(x), T(eps))
 end
 
+function testFitLinearTransformation(T::Type, eps)
+    dim = 4
+    deg = 3
+    nSamples = 10000
+    f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
+    df(x) = [
+        - x[4] + 7 * x[3]^2,
+        6 * x[2]^2,
+        14 * x[3] * x[1],
+        - x[1]
+    ]
+    data = [1.0 .+ 2.0 .* randn(T, dim) for i in 1:nSamples]
+    y = f.(data)
+    transformation = LinearTransformation(data)
+    vslsq = VSLeastSquares(PolynomialBasis(deg, dim, Hermite), transformation, T)
+    fit(vslsq, data, y)
+    x = randn(T, dim)
+    @test compeps(predict(vslsq, x), f(x), T(eps))
+    println(df(x))
+    println(gradient(vslsq, x))
+    @test compeps(gradient(vslsq, x), df(x), T(eps))
+end
+
 @testset "Least squares" begin
     @test testFitVoidTransformation(Float32, 1.E-3)
     @test testFitVoidTransformation(Float64, 1.E-10)
+    testFitLinearTransformation(Float64, 1.E-3)
 end

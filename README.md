@@ -20,9 +20,11 @@ Transformations are are represented by the type `AbstractTransformation` and mus
 
 ```julia
 apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer)
 ```
 
-The function `apply!` applies the transformation to `x` and stores the result in `tx`.
+- The function `apply!` applies the transformation to `x` and stores the result in `tx`.
+- The function `jacobian` computes the general term of the Jacobian matrix of the transformation at the point `x`: `jacobian(t, x, i, j)` returns $\partial_{x_j} \varphi_i(x)$.
 
 Currently two transformations are implemented
 
@@ -40,7 +42,7 @@ Currently two transformations are implemented
     end
     ````
 
-    If you intend to use $\varphi$ to center the data around its mean and rescale them by their standard deviation, you can construct the `LinearTransformation` using
+    If you intend to use $\varphi$ to center the data around their mean and rescale them by their standard deviation, you can construct the `LinearTransformation` using
 
     ```julia
     LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
@@ -67,6 +69,10 @@ end
 function apply!(t::MyTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
     .....
     tx .=
+end
+
+function jacobian(t::MyTransformation, x::AbstractVector{<:Real}; i::Integer, j::Integer)
+    .....
 end
 ```
 
@@ -148,6 +154,12 @@ Once a model is fit, a prediction can be obtained using
 
 ```julia
 predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+```
+
+and the derivative of the prediction using
+
+```julia
+derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 ```
 
 ## Some examples
