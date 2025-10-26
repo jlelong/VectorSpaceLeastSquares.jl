@@ -132,8 +132,6 @@ function testFitLinearTransformation(T::Type, eps)
     fit(vslsq, data, y)
     x = randn(T, dim)
     @test compeps(predict(vslsq, x), f(x), T(eps))
-    println(df(x))
-    println(gradient(vslsq, x))
     @test compeps(gradient(vslsq, x), df(x), T(eps))
 end
 
