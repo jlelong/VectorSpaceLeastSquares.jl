@@ -1,14 +1,32 @@
 using LinearAlgebra.BLAS: ger!
+
+"""
+    AbstractTransformation
+
+Super type for all transformations. 
+
+A transformation is a function ``\\varphi: \\mathbb{R}^d \\to \\mathbb{R}^d``, which is applied on the fly to the data before proceeding with the least squares problem. A transformation must implement [`apply!`](@ref) and [`jacobian`](@ref)
+"""
 abstract type AbstractTransformation end
+
+"""
+    VoidTransformation <: AbstractTransformation
+
+This transformation does nothing
+"""
 struct VoidTransformation <: AbstractTransformation end
 
 """
-Apply the transformation `t` to `x` ans store the result in `tx`
+    apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+
+Apply the transformation `t` to `x` and store the result in `tx`
 """
 function apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real}) end
 
 """
-Compute `\\partial_{x_j} t_i(x)`
+    jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer)
+
+Compute ``\\partial_{x_j} \\varphi_i(x)``
 """
 function jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer) end
 
@@ -20,26 +38,34 @@ function jacobian(t::VoidTransformation, x::AbstractVector{<:Real}, i::Integer, 
     return Int(i == j)
 end
 
+"""
+    LinearTransformation{Td} <: AbstractTransformation where Td<:Real
+
+Implement a linear transformation of the data defined by ``\\varphi(x) = (x - \\alpha) * \\sigma`` 
+"""
 struct LinearTransformation{Td} <: AbstractTransformation where Td<:Real
     scale::Vector{Td}
     center::Vector{Td}
 end
 
-function apply!(t::LinearTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
-    tx .= (x .- t.center) .* t.scale
-end
+"""
+    getCenter(t::LinearTransformation{<:Real})
 
-function jacobian(t::LinearTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
-    if i != j
-        return 0.
-    else
-        return t.scale[i]
-    end
-end
-
+Return the center α of the linear transformation
+"""
+getCenter(t::LinearTransformation{<:Real}) = t.center
 
 """
-Create a linear transformation by setting `center` as the empirical mean and `scale` as the inverse of the empirical standard deviation. Each entry of `x` is supposed one sample of the data
+    getScale(t::LinearTransformation{<:Real}) = t.scale
+
+Return the scale σ of the linear transformation
+"""
+getScale(t::LinearTransformation{<:Real}) = t.scale
+
+"""
+    LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+
+Create a linear transformation by setting α as the empirical mean and σ as the inverse of the empirical standard deviation. Each entry of `x` is supposed to be one sample of the data.
 """
 function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     dim = 0
@@ -62,8 +88,23 @@ function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:R
     LinearTransformation(squares, center)
 end
 
-abstract type NonLinearTransform <: AbstractTransformation end
+function apply!(t::LinearTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
+    tx .= (x .- t.center) .* t.scale
+end
 
+function jacobian(t::LinearTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
+    if i != j
+        return 0.
+    else
+        return t.scale[i]
+    end
+end
+
+"""
+    VSLeastSquares{Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+The main object to solve a least squares problem.
+"""
 struct VSLeastSquares{Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     basis::Tb
     transformation::Tt
@@ -72,6 +113,8 @@ struct VSLeastSquares{Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 end
 
 """
+    VSLeastSquares(basis::Tb, transform::Tt=VoidTransformation(), Td::Type=Float64) where {Tb<:AbstractBasis, Tt<:AbstractTransformation}
+
 Create a VSLeastSquares object from `basis` and `transform` and capable of handling `Td` typed data.
 """
 function VSLeastSquares(basis::Tb, transform::Tt=VoidTransformation(), Td::Type=Float64) where {Tb<:AbstractBasis, Tt<:AbstractTransformation}
@@ -80,11 +123,46 @@ function VSLeastSquares(basis::Tb, transform::Tt=VoidTransformation(), Td::Type=
     VSLeastSquares{Tb, Tt, Td}(basis, transform, coefficients, transformed_data)
 end
 
-length(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = Int64(length(vslsq.basis))
-getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
-getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.basis
 
 """
+    length(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Return the number of functions of the basis used to solve the least squares problem
+"""
+length(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = length(vslsq.basis)
+
+"""
+    nVariates(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Return the number of variates in the least squares problem
+"""
+nVariates(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = nVariates(vslsq.basis)
+
+"""
+    size(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Return the tuple (nVariates, length)
+"""
+size(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = size(vslsq.basis)
+
+"""
+    getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Return the coefficients solution to the least squares problem. The function [`fit`](@ref) must have been called
+"""
+getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
+
+"""
+    getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Return the basis used to solve the least squares problem.
+"""
+getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.basis
+
+
+"""
+    fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
 Solve the least squares problem
 """
 function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
@@ -107,9 +185,11 @@ function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVect
 end
 
 """
+    predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
 Compute the value predicted by the least squares problem.
 
-The method `fit` must have been called before.
+The method [`fit`](@ref) must have been called before.
 """
 function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     val = 0.
@@ -125,9 +205,11 @@ function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where
 end
 
 """
+    derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
 Compute the partial derivative of the prediction w.r.t to the `index` variable
 
-The method `fit` must have been called before.
+The method [`fit`](@ref) must have been called before.
 """
 function derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     val = 0.
@@ -148,10 +230,10 @@ function derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, in
 end
 
 """
-Compute the gradient of the prediction
+    gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-The method `fit` must have been called before.
+Compute the gradient of the prediction at `x`
+
+The method [`fit`](@ref) must have been called before.
 """
-function gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
-    return [derivative(vslsq, x, i) for i in 1:length(x)]
-end
+gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = [derivative(vslsq, x, i) for i in 1:length(x)]
