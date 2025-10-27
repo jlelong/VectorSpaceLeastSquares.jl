@@ -1,6 +1,14 @@
 # Polynomial basis
-using SparseArrays: getcolptr, getrowval, nonzeros, rowvals
+using SparseArrays: nonzeros, rowvals, nzrange
 
+"""
+    PolynomialType
+
+List the families of polynomials available through the [`PolynomialBasis`](@ref) type
+- `Canonic`
+- `Hermite`
+- `Tchebychev`
+"""
 @enum PolynomialType begin
     Canonic
     Hermite
@@ -8,12 +16,14 @@ using SparseArrays: getcolptr, getrowval, nonzeros, rowvals
 end
 
 """
+    PolynomialBasis <: AbstractBasis
+
 Represent a multivariate polynomial
-- `degree`: total maximum degree
-- `nVariates`: number of variates
-- `dim`: dimension of the generated vector space
-- `type`: a value from `PolynomialType`
-- `tensor`: the sparse tensor representation of the polynomial. Polynomials are stored by column
+- `degree::Int64`: maximum total degree
+- `nVariates::Int6`: number of variates
+- `dim::Int6`: dimension of the generated vector space
+- `type::PolynomialType`: a value from `PolynomialType`
+- `tensor::SparseMatrixCSC{Int64, Int64}`: the sparse tensor representation of the polynomial. Polynomials are stored by column.
 """
 struct PolynomialBasis <: AbstractBasis
     degree::Int64
@@ -24,6 +34,8 @@ struct PolynomialBasis <: AbstractBasis
 end
 
 """
+    computePolynomialTensor(degree::Integer, nVariates::Integer)
+
 Compute the full tensor representation of a multivariate polynomial
 """
 function computePolynomialTensor(degree::Integer, nVariates::Integer)
@@ -50,6 +62,11 @@ function computePolynomialTensor(degree::Integer, nVariates::Integer)
 end
 
 
+"""
+    PolynomialBasis(degree::Integer, nVariates::Integer, type::PolynomialType)
+
+Create a polynomial basis with `type`, `nVariates` variables and total maximum `degree`
+"""
 function PolynomialBasis(degree::Integer, nVariates::Integer, type::PolynomialType)
     fullTensor = computePolynomialTensor(degree, nVariates)
     dim = size(fullTensor, 2)
@@ -231,6 +248,8 @@ function dtchebychev1d(x::Real, n::Integer)
 end
 
 """
+    value(polType::PolynomialType, degree::Integer, x::Real)
+
 Evaluate a 1d polynomial of type `polType` and degree `degree` at `x`
 """
 function value(polType::PolynomialType, degree::Integer, x::Real)
@@ -246,6 +265,8 @@ function value(polType::PolynomialType, degree::Integer, x::Real)
 end
 
 """
+    derivative(polType::PolynomialType, degree::Integer, x::Real)
+
 Evaluate the first derivative of a 1d polynomial of type `polType` and degree `degree` at `x`
 """
 function derivative(polType::PolynomialType, degree::Integer, x::Real)
@@ -261,6 +282,8 @@ function derivative(polType::PolynomialType, degree::Integer, x::Real)
 end
 
 """
+    value(p::PolynomialBasis, x::AbstractVector{<:Real}, i::Integer)
+
 Evaluate the `i`-th function of a Polynomial basis `p` at point `x`
 """
 function value(p::PolynomialBasis, x::AbstractVector{<:Real}, i::Integer)
@@ -276,6 +299,8 @@ end
 
 
 """
+    derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex::Ti) where {Td<:Real, Ti<:Integer}
+
 Evaluate the first partial derivative w.r.t variable `derivativeIndex` of the `polIndex`-th member of the polynomial basis `p`
 """
 function derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex::Ti) where {Td<:Real, Ti<:Integer}
