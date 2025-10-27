@@ -17,7 +17,3 @@ makedocs(
         "Examples" => "examples.md"
     ]
 )
-
-deploydocs(
-    repo = "github.com/jlelong/VectorSpaceLeastSquares.jl.git",
-)
