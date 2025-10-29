@@ -1,8 +1,9 @@
 # Vector Space bases
 
-The vector space $\mathcal{V}$ is represented by the abstract type `AbstractBasis` which provides the following method
+The vector space $\mathcal{V}$ is represented by the abstract type `AbstractBasis`.
 
 ```@docs
+AbstractBasis
 nVariates(B::AbstractBasis)
 length(B::AbstractBasis)
 size(B::AbstractBasis)

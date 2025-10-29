@@ -5,7 +5,7 @@ using LinearAlgebra.BLAS: ger!
 
 Super type for all transformations. 
 
-A transformation is a function ``\\varphi: \\mathbb{R}^d \\to \\mathbb{R}^d``, which is applied on the fly to the data before proceeding with the least squares problem. A transformation must implement [`apply!`](@ref) and [`jacobian`](@ref)
+A transformation is a function ``\\varphi: \\mathbb{R}^d \\to \\mathbb{R}^d``, which is applied on the fly to the data before proceeding with the least squares problem. A transformation must implement [`apply!`](@ref) and [`jacobian`](@ref).
 
 
 To define a new transformation, define a new concrete subtype of `AbstractTransformation` and implement the corresponding [`apply!`](@ref) and [`jacobian`](@ref) methods. For instance the scaled log-transformation ``\\varphi(x) = \\alpha \\log(x)`` where ``\\alpha \\in \\mathbb{R}`` is defined as follows
@@ -32,21 +32,21 @@ abstract type AbstractTransformation end
 """
     VoidTransformation <: AbstractTransformation
 
-This transformation does nothing
+This transformation does nothing.
 """
 struct VoidTransformation <: AbstractTransformation end
 
 """
     apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
 
-Apply the transformation `t` to `x` and store the result in `tx`
+Apply the transformation `t` to `x` and store the result in `tx`.
 """
 function apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real}) end
 
 """
     jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer)
 
-Compute ``\\partial_{x_j} \\varphi_i(x)``
+Compute ``\\partial_{x_j} \\varphi_i(x)``.
 """
 function jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer) end
 
@@ -168,7 +168,7 @@ size(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTr
 """
     getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-Return the coefficients solution to the least squares problem. The function [`fit`](@ref) must have been called
+Return the coefficients solution to the least squares problem. 
 """
 getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
 
@@ -183,7 +183,7 @@ getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:Abstra
 """
     fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-Solve the least squares problem
+Solve the least squares problem.
 """
 function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
@@ -227,7 +227,7 @@ end
 """
     derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-Compute the partial derivative of the prediction w.r.t to the `index` variable
+Compute the partial derivative of the prediction w.r.t to the `index` variable.
 
 The method [`fit`](@ref) must have been called before.
 """
@@ -252,7 +252,7 @@ end
 """
     gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-Compute the gradient of the prediction at `x`
+Compute the gradient of the prediction at `x`.
 
 The method [`fit`](@ref) must have been called before.
 """
