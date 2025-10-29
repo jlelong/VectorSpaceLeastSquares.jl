@@ -6,6 +6,26 @@ using LinearAlgebra.BLAS: ger!
 Super type for all transformations. 
 
 A transformation is a function ``\\varphi: \\mathbb{R}^d \\to \\mathbb{R}^d``, which is applied on the fly to the data before proceeding with the least squares problem. A transformation must implement [`apply!`](@ref) and [`jacobian`](@ref)
+
+
+To define a new transformation, define a new concrete subtype of `AbstractTransformation` and implement the corresponding [`apply!`](@ref) and [`jacobian`](@ref) methods. For instance the scaled log-transformation ``\\varphi(x) = \\alpha \\log(x)`` where ``\\alpha \\in \\mathbb{R}`` is defined as follows
+
+```julia
+struct LogTransformation <: AbstractTransformation
+    scale::Vector{<:Real}
+end
+
+function apply!(t::LogTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+    tx .= t.scale .* log.(x)
+end
+
+function jacobian(t::LogTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer)
+    if i != j
+        return 0.
+    end
+    t.scale[i] / x[i]
+end
+```
 """
 abstract type AbstractTransformation end
 
