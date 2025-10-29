@@ -33,6 +33,11 @@ struct PolynomialBasis <: AbstractBasis
     tensor::SparseMatrixCSC{Int64, Int64} # Store polynomials by column
 end
 
+nVariates(p::PolynomialBasis) = p.nVariates
+length(p::PolynomialBasis) = p.size
+getType(p::PolynomialBasis) = p.type
+getTensor(p::PolynomialBasis) = p.tensor
+
 """
     computePolynomialTensor(degree::Integer, nVariates::Integer)
 
@@ -72,11 +77,6 @@ function PolynomialBasis(degree::Integer, nVariates::Integer, type::PolynomialTy
     dim = size(fullTensor, 2)
     return PolynomialBasis(degree, nVariates, dim, type, sparse(fullTensor))
 end
-
-nVariates(p::PolynomialBasis) = p.nVariates
-length(p::PolynomialBasis) = p.size
-getType(p::PolynomialBasis) = p.type
-getTensor(p::PolynomialBasis) = p.tensor
 
 canonic1d(x::Real, n::Integer) = x^n
 dcanonic1d(x::Real, n::Integer) = n == 0 ? 0. : x^(n-1)
