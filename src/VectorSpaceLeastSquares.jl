@@ -2,6 +2,7 @@ module VectorSpaceLeastSquares
 
 # Write your package code here.
 include("basis.jl")
+include("transformations.jl")
 include("leastsquares.jl")
 
 export PolynomialType, Canonic, Hermite, Tchebychev
