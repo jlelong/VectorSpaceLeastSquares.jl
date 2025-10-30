@@ -112,6 +112,7 @@ Compute the partial derivative of the prediction w.r.t to the `index` variable.
 The method [`fit`](@ref) must have been called before.
 """
 function derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+    @assert isDifferentiable(getBasis(vslsq)) "The basis must be differentiable to call `derivative`."
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)

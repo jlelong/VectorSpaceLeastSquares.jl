@@ -37,6 +37,7 @@ nVariates(p::PolynomialBasis) = p.nVariates
 length(p::PolynomialBasis) = p.size
 getType(p::PolynomialBasis) = p.type
 getTensor(p::PolynomialBasis) = p.tensor
+isDifferentiable(p::PolynomialBasis) = true
 
 """
     computePolynomialTensor(nVariates::Integer, degree::Integer)
