@@ -16,7 +16,7 @@ List the families of polynomials available through the [`PolynomialBasis`](@ref)
 end
 
 """
-    PolynomialBasis <: AbstractBasis
+    PolynomialBasis
 
 Represent a multivariate polynomial
 - `degree::Int64`: maximum total degree
@@ -39,11 +39,11 @@ getType(p::PolynomialBasis) = p.type
 getTensor(p::PolynomialBasis) = p.tensor
 
 """
-    computePolynomialTensor(degree::Integer, nVariates::Integer)
+    computePolynomialTensor(nVariates::Integer, degree::Integer)
 
 Compute the full tensor representation of a multivariate polynomial
 """
-function computePolynomialTensor(degree::Integer, nVariates::Integer)
+function computePolynomialTensor(nVariates::Integer, degree::Integer)
     dim = binomial(nVariates + degree, degree)
     fullTensor = zeros(Int64, nVariates, dim)
     partialDegrees = zeros(Int64, nVariates)
@@ -68,12 +68,12 @@ end
 
 
 """
-    PolynomialBasis(degree::Integer, nVariates::Integer, type::PolynomialType)
+    PolynomialBasis(type::PolynomialType, nVariates::Integer, degree::Integer)
 
 Create a polynomial basis with `type`, `nVariates` variables and total maximum `degree`
 """
-function PolynomialBasis(degree::Integer, nVariates::Integer, type::PolynomialType)
-    fullTensor = computePolynomialTensor(degree, nVariates)
+function PolynomialBasis(type::PolynomialType, nVariates::Integer, degree::Integer)
+    fullTensor = computePolynomialTensor(nVariates, degree)
     dim = size(fullTensor, 2)
     return PolynomialBasis(degree, nVariates, dim, type, sparse(fullTensor))
 end

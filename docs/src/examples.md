@@ -13,7 +13,7 @@ data = [randn(T, dim) for i in 1:nSamples]
 y = f.(data)
 
 # Build the VSLeastSquares object and solve the least squares problem
-vslsq = VSLeastSquares(PolynomialBasis(deg, dim, Hermite), VoidTransformation(), T)
+vslsq = VSLeastSquares(PolynomialBasis(Hermite, dim, deg), VoidTransformation(), T)
 fit(vslsq, data, y)
 
 # Compute new predictions
@@ -36,7 +36,7 @@ y = f.(data)
 transformation = LinearTransformation(data)
 
 # Build the VSLeastSquares object and solve the least squares problem
-vslsq = VSLeastSquares(PolynomialBasis(deg, dim, Hermite), transformation, T)
+vslsq = VSLeastSquares(PolynomialBasis(Hermite, dim, deg), transformation, T)
 fit(vslsq, data, y)
 
 # Compute new predictions and their gradient

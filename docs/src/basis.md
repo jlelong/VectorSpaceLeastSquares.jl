@@ -29,5 +29,5 @@ PolynomialType
 A [`PolynomialBasis`](@ref) object can be created using
 
 ```@docs
-PolynomialBasis(degree::Integer, nVariates::Integer, type::PolynomialType)
+PolynomialBasis(type::PolynomialType, nVariates::Integer, degree::Integer)
 ```
