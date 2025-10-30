@@ -4,12 +4,12 @@ The vector space $\mathcal{V}$ is represented by the abstract type `AbstractBasi
 
 ```@docs
 AbstractBasis
-nVariates(B::AbstractBasis)
-length(B::AbstractBasis)
-size(B::AbstractBasis)
-getType(B::AbstractBasis)
-value(B::AbstractBasis, x::AbstractVector{<:Real}, index::Integer)
-derivative(B::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, derivativeIndex::Integer)
+nVariates(b::AbstractBasis)
+length(b::AbstractBasis)
+size(b::AbstractBasis)
+getType(b::AbstractBasis)
+value(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer)
+derivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, derivativeIndex::Integer)
 ```
 
 ## Polynomial Bases
@@ -30,4 +30,19 @@ A [`PolynomialBasis`](@ref) object can be created using
 
 ```@docs
 PolynomialBasis(type::PolynomialType, nVariates::Integer, degree::Integer)
+```
+
+## Piecewise constant functions (local bases)
+
+Piecewise constant functions can be efficiently obtained from a basis of local functions with disjoint supports. Such bases are implemented using the `PiecewiseConstantBasis`
+
+```@docs
+PiecewiseConstantBasis
+```
+
+A [`PiecewiseConstantBasis`](@ref) object can be created using
+
+```@docs
+PiecewiseConstantBasis(nVariates::Integer, nIntervals::Integer)
+PiecewiseConstantBasis(nVariates::Integer, nIntervals::Vector{<:Integer})
 ```

@@ -6,7 +6,7 @@ include("transformations.jl")
 include("leastsquares.jl")
 
 export PolynomialType, Canonic, Hermite, Tchebychev
-export PolynomialBasis, PiecewiseConstant, AbstractBasis
+export PolynomialBasis, PiecewiseConstantBasis, AbstractBasis
 export value, derivative, nVariates, length, size, getTensor, getType
 export AbstractTransformation, VoidTransformation, apply!, jacobian
 export LinearTransformation, getCenter, getScale
