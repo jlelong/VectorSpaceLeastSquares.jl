@@ -101,7 +101,7 @@ end
     @test all([compeps(l.scale[i], 1., sqrt(3) * eps) for i in 1:length(l.scale)])
 end
 
-function testFitVoidTransformation(T::Type, eps)
+function testFitVoidTransformationPolynomialBasis(T::Type, eps)
     dim = 4
     deg = 3
     nSamples = 10000
@@ -114,7 +114,7 @@ function testFitVoidTransformation(T::Type, eps)
     return compeps(predict(vslsq, x), f(x), T(eps))
 end
 
-function testFitLinearTransformation(T::Type, eps)
+function testFitLinearTransformationPolynomialBasis(T::Type, eps)
     dim = 4
     deg = 3
     nSamples = 10000
@@ -135,8 +135,23 @@ function testFitLinearTransformation(T::Type, eps)
     @test compeps(gradient(vslsq, x), df(x), T(eps))
 end
 
+function testVoidTransformationPiecewiseConstantBasis(T::Type, dim, eps)
+    nIntervals = 50
+    nSamples = 100000
+    data = [rand(T, dim) for i in 1:nSamples]
+    f(x) = log(1. + sum(x.^2))
+    y = f.(data)
+    vslsq = VSLeastSquares(PiecewiseConstantBasis(dim, nIntervals), VoidTransformation(), T)
+    fit(vslsq, data, y)
+    x = rand(T, dim)
+    println(predict(vslsq, x), f(x))
+    @test compeps(predict(vslsq, x), f(x), T(eps))
+end
+
 @testset "Least squares" begin
-    @test testFitVoidTransformation(Float32, 1.E-3)
-    @test testFitVoidTransformation(Float64, 1.E-10)
-    testFitLinearTransformation(Float64, 1.E-3)
+    @test testFitVoidTransformationPolynomialBasis(Float32, 1.E-3)
+    @test testFitVoidTransformationPolynomialBasis(Float64, 1.E-10)
+    testFitLinearTransformationPolynomialBasis(Float64, 1.E-3)
+    testVoidTransformationPiecewiseConstantBasis(Float64, 1, 1.E-2)
+    testVoidTransformationPiecewiseConstantBasis(Float64, 2, 1.E-2)
 end

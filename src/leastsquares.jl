@@ -138,3 +138,49 @@ Compute the gradient of the prediction at `x`.
 The method [`fit`](@ref) must have been called before.
 """
 gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = [derivative(vslsq, x, i) for i in 1:length(x)]
+
+
+#
+# Specific methods for PiecewiseConstantBasis
+#
+
+"""
+    fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
+
+Solve the least squares problem using the specific structure of the [`PiecewiseConstantBasis`](@ref).
+"""
+function fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
+    nSamples = length(x)
+    count = Vector{Int64}(undef, length(vslsq))
+    count .= 0
+    coefficients = getCoefficients(vslsq)
+    coefficients .= 0
+    for i in 1:nSamples
+        apply!(vslsq.transformation, vslsq._transformed_data, x[i])
+        globalIndex = computeGlobalIndex(getBasis(vslsq), vslsq._transformed_data)
+        if globalIndex != -1
+            count[globalIndex] += 1
+            vslsq.coefficients[globalIndex] += y[i]
+        end
+    end
+    coefficients ./= max.(count, 1)
+end
+
+"""
+    predict(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
+
+Compute the value predicted by the least squares problem using the specific structure of the [`PiecewiseConstantBasis`](@ref).
+
+The method [`fit`](@ref) must have been called before.
+"""
+function predict(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
+    coefficients = getCoefficients(vslsq)
+    basis = getBasis(vslsq)
+    apply!(vslsq.transformation, vslsq._transformed_data, x)
+    globalIndex = computeGlobalIndex(basis, vslsq._transformed_data)
+    if globalIndex != -1
+        return coefficients[globalIndex]
+    else
+        return 0.
+    end
+end

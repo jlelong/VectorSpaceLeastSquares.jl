@@ -39,17 +39,23 @@ end
 nVariates(p::PiecewiseConstantBasis) = p.nVariates
 length(p::PiecewiseConstantBasis) = p.size
 getType(p::PiecewiseConstantBasis) = "PiecewiseConstantBasis"
+isDifferentiable(p::PiecewiseConstantBasis) = false
 
+"""
+    computeGlobalIndex(p::PiecewiseConstantBasis, x::AbstractVector{<:Real})
+
+Compute the linear index of grid cell in which `x` lies. Return -1 if `x` is not inside the grid.
+"""
 function computeGlobalIndex(p::PiecewiseConstantBasis, x::AbstractVector{<:Real})
     globalIndex = 1
     nIntervalsProd = 1
     for i in 1:length(x)
-        dimIndex = Int64(x[i] * p.nIntervals[i])
-        if dimIndex < 0 || dimIndex >= nIntervals[i]
+        dimIndex = floor(Int64, x[i] * p.nIntervals[i])
+        if dimIndex < 0 || dimIndex >= p.nIntervals[i]
             return -1
         end
         globalIndex += dimIndex * nIntervalsProd;
-        nIntervalsProd *= nIntervals[i]
+        nIntervalsProd *= p.nIntervals[i]
     end
     return globalIndex
 end
