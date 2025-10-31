@@ -48,7 +48,7 @@ size(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTr
 """
     getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-Return the coefficients solution to the least squares problem. 
+Return the coefficients solution to the least squares problem.
 """
 getCoefficients(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.coefficients
 
@@ -59,6 +59,13 @@ Return the basis used to solve the least squares problem.
 """
 getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq.basis
 
+
+"""
+    getTx(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Return the vector internally used to store the transformed data. Internal use only.
+"""
+getTx(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq._transformed_data
 
 """
     fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
@@ -74,9 +81,9 @@ function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVect
     b .= 0.
     phi_k .= 0
     for i in 1:nSamples
-        apply!(vslsq.transformation, vslsq._transformed_data, x[i])
+        apply!(vslsq.transformation, getTx(vslsq), x[i])
         for k in 1:length(vslsq)
-            phi_k[k] = value(vslsq.basis, vslsq._transformed_data, k)
+            phi_k[k] = value(vslsq.basis, getTx(vslsq), k)
             b[k] += phi_k[k] * y[i]
         end
         ger!(Td(1.), phi_k, phi_k, A)
@@ -95,9 +102,9 @@ function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
-    apply!(vslsq.transformation, vslsq._transformed_data, x)
+    apply!(vslsq.transformation, getTx(vslsq), x)
     for i in 1:length(vslsq)
-        v = value(basis, vslsq._transformed_data, i)
+        v = value(basis, getTx(vslsq), i)
         c = coefficients[i]
         val += c * v
     end
@@ -116,11 +123,11 @@ function derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, in
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
-    apply!(vslsq.transformation, vslsq._transformed_data, x)
+    apply!(vslsq.transformation, getTx(vslsq), x)
     for i in 1:length(vslsq)
         di = 0.
         for j in 1:length(x)
-            dval = derivative(basis, vslsq._transformed_data, i, j)
+            dval = derivative(basis, getTx(vslsq), i, j)
             dphi = jacobian(vslsq.transformation, x, j, index)
             di += dval * dphi
         end
@@ -156,8 +163,8 @@ function fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractV
     coefficients = getCoefficients(vslsq)
     coefficients .= 0
     for i in 1:nSamples
-        apply!(vslsq.transformation, vslsq._transformed_data, x[i])
-        globalIndex = computeGlobalIndex(getBasis(vslsq), vslsq._transformed_data)
+        apply!(vslsq.transformation, getTx(vslsq), x[i])
+        globalIndex = computeGlobalIndex(getBasis(vslsq), getTx(vslsq))
         if globalIndex != -1
             count[globalIndex] += 1
             vslsq.coefficients[globalIndex] += y[i]
@@ -176,8 +183,8 @@ The method [`fit`](@ref) must have been called before.
 function predict(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
-    apply!(vslsq.transformation, vslsq._transformed_data, x)
-    globalIndex = computeGlobalIndex(basis, vslsq._transformed_data)
+    apply!(vslsq.transformation, getTx(vslsq), x)
+    globalIndex = computeGlobalIndex(basis, getTx(vslsq))
     if globalIndex != -1
         return coefficients[globalIndex]
     else
