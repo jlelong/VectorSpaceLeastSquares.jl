@@ -29,3 +29,25 @@ getCenter
 getScale
 LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
 ```
+
+## Gaussian transformation
+
+It corresponds to $\varphi: \mathbb{R}^d \to \mathbb{R}^d$ such that $\varphi(x) = \mathcal{N}((x - \alpha) * \sigma)$ where $\alpha, \sigma \in \mathbb{R}^d$, $\mathcal{N}$ is the cumulative distribution function of the standard normal distribution and `*` denotes a term by term multiplication.
+
+```@docs
+GaussianTransformation
+getMean(::GaussianTransformation{<:Real})
+getSigma(::GaussianTransformation{<:Real})
+GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+```
+
+## Log-normal transformation
+
+It corresponds to $\varphi: \mathbb{R}^d \to \mathbb{R}^d$ such that $\varphi(x) = \mathcal{N}((log(x) - \alpha) * \sigma)$ where $\alpha, \sigma \in \mathbb{R}^d$, $\mathcal{N}$ is the cumulative distribution function of the standard normal distribution and `*` denotes a term by term multiplication.
+
+```@docs
+LogNormalTransformation
+getMean(::LogNormalTransformation{<:Real})
+getSigma(::LogNormalTransformation{<:Real})
+LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+```

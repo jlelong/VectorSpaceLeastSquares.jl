@@ -1,3 +1,5 @@
+using Distributions: cdf, pdf, Normal
+
 """
     AbstractTransformation
 
@@ -28,13 +30,6 @@ end
 abstract type AbstractTransformation end
 
 """
-    VoidTransformation <: AbstractTransformation
-
-This transformation does nothing.
-"""
-struct VoidTransformation <: AbstractTransformation end
-
-"""
     apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
 
 Apply the transformation `t` to `x` and store the result in `tx`.
@@ -48,6 +43,13 @@ Compute ``\\partial_{x_j} \\varphi_i(x)``.
 """
 function jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer) end
 
+"""
+    VoidTransformation <: AbstractTransformation
+
+This transformation does nothing.
+"""
+struct VoidTransformation <: AbstractTransformation end
+
 function apply!(t::VoidTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
     tx .= x
 end
@@ -56,6 +58,9 @@ function jacobian(t::VoidTransformation, x::AbstractVector{<:Real}, i::Integer, 
     return Int(i == j)
 end
 
+#
+# Linear transformation
+#
 """
     LinearTransformation{Td} <: AbstractTransformation where Td<:Real
 
@@ -80,12 +85,7 @@ Return the scale σ of the linear transformation
 """
 getScale(t::LinearTransformation{<:Real}) = t.scale
 
-"""
-    LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
-
-Create a linear transformation by setting α as the empirical mean and σ as the inverse of the empirical standard deviation. Each entry of `x` is supposed to be one sample of the data.
-"""
-function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+function computeStdDevAndMean(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     dim = 0
     nSamples = length(x)
     if nSamples >= 1
@@ -102,8 +102,17 @@ function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:R
         end
     end
     center .= center ./ nSamples
-    squares .= 1. ./ sqrt.((squares ./ nSamples .- center.^2))
-    LinearTransformation(squares, center)
+    squares .= sqrt.((squares ./ nSamples .- center.^2))
+    return (squares, center)
+end
+"""
+    LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+
+Create a linear transformation by setting α as the empirical mean and σ as the inverse of the empirical standard deviation. Each entry of `x` is supposed to be one sample of the data.
+"""
+function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+    (stdDev, center) = computeStdDevAndMean(x)
+    LinearTransformation(1. ./ stdDev, center)
 end
 
 function apply!(t::LinearTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
@@ -118,3 +127,101 @@ function jacobian(t::LinearTransformation{Td}, x::AbstractVector{Td}, i::Integer
     end
 end
 
+#
+# Gaussian transformation
+#
+"""
+    GaussianTransformation{Td} <: AbstractTransformation where Td<:Real
+
+Implement an Gaussian transformation of the data defined by ``\\varphi(x) = N((x - \\alpha) / \\sigma)`` where ``N`` is the cdf of the standard Gaussian distribution
+"""
+struct GaussianTransformation{Td} <: AbstractTransformation where Td<:Real
+    sigma::Vector{Td}
+    mean::Vector{Td}
+end
+
+"""
+    getMean(t::LinearTransformation{<:Real})
+
+Return the mean α of the Gaussian distribution
+"""
+getMean(t::GaussianTransformation{<:Real}) = t.mean
+
+"""
+    getScale(t::LinearTransformation{<:Real}) = t.scale
+
+Return the standard deviation σ of the Gaussian distribution
+"""
+getSigma(t::GaussianTransformation{<:Real}) = t.sigma
+
+"""
+    GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+
+Create a Gaussian transformation by setting α as the empirical mean and σ as the empirical standard deviation. Each entry of `x` is supposed to be one sample of the data.
+"""
+function GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+    (stdDev, center) = computeStdDevAndMean(x)
+    GaussianTransformation(stdDev, center)
+end
+
+function apply!(t::GaussianTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
+    tx .= cdf.(Normal, (x .- t.mean) ./ t.sigma)
+end
+
+function jacobian(t::GaussianTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
+    if i != j
+        return 0.
+    else
+        return pdf(Normal, (x[i] - t.mean[i]) / t.sigma[i]) / t.sigma[i]
+    end
+end
+
+#
+# Log-normal transformation
+#
+
+"""
+    LogNormalTransformation{Td} <: AbstractTransformation where Td<:Real
+
+Implement a Log-normal transformation of the data defined by ``\\varphi(x) = N((log(x) - \\alpha) / \\sigma)`` where ``N`` is the cdf of the standard Gaussian distribution.
+"""
+struct LogNormalTransformation{Td} <: AbstractTransformation where Td<:Real
+    sigma::Vector{Td}
+    mean::Vector{Td}
+end
+
+"""
+    getMean(t::LinearTransformation{<:Real})
+
+Return the mean α of the underlying Gaussian distribution
+"""
+getMean(t::LogNormalTransformation{<:Real}) = t.mean
+
+"""
+    getScale(t::LinearTransformation{<:Real}) = t.scale
+
+Return the standard deviation σ of the underlying Gaussian distribution
+"""
+getSigma(t::LogNormalTransformation{<:Real}) = t.sigma
+
+"""
+    LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+
+Create a Log-normal transformation by setting α and σ as the empirical mean and variance of `log(x)` . Each entry of `x` is supposed to be one sample of the data.
+"""
+function LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+    (stdDev, center) = computeStdDevAndMean(log.(x))
+    LogNormalTransformation(stdDev, center)
+end
+
+function apply!(t::LogNormalTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
+    tx .= cdf.(Normal, (log.(x) .- t.mean) ./ t.sigma)
+end
+
+function jacobian(t::LogNormalTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
+    if i != j
+        return 0.
+    else
+        return pdf(Normal, (log(x[i]) - t.mean[i]) / t.sigma[i]) / (x[i] * t.sigma[i])
+    end
+end
