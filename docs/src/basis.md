@@ -8,6 +8,7 @@ nVariates(b::AbstractBasis)
 length(b::AbstractBasis)
 size(b::AbstractBasis)
 getType(b::AbstractBasis)
+isDifferentiable(b::AbstractBasis)
 value(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer)
 derivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, derivativeIndex::Integer)
 ```
