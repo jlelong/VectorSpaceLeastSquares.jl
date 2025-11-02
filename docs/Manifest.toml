@@ -2,7 +2,7 @@
 
 julia_version = "1.11.7"
 manifest_format = "2.0"
-project_hash = "dfec3d640e541aa2c9756dd17ecb0612f3a10558"
+project_hash = "5c8fdf9b2673e4e2770cd66e107caf9d9c40bc34"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -30,6 +30,11 @@ version = "1.11.0"
 git-tree-sha1 = "0691e34b3bb8be9307330f88d1a3c3f25466c24d"
 uuid = "d1d4a3ce-64b1-5f1a-9ba4-7e7e69966f35"
 version = "0.1.9"
+
+[[deps.Changelog]]
+git-tree-sha1 = "e579c6157598169ad4ef17263bdf3452b4a3e316"
+uuid = "5217a498-cd5d-4ec6-b8c2-9b85a09b6e3e"
+version = "1.1.0"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
