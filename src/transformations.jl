@@ -188,7 +188,7 @@ end
 """
     LogNormalTransformation{Td} <: AbstractTransformation where Td<:Real
 
-Implement a Log-normal transformation of the data defined by ``\\varphi(x) = N((log(x) - \\alpha) / \\sigma)`` where ``N`` is the cdf of the standard Gaussian distribution.
+Implement a Log-normal transformation of the data defined by ``\\varphi(x) = N((\\log(x) - \\alpha) / \\sigma)`` where ``N`` is the cdf of the standard Gaussian distribution.
 """
 struct LogNormalTransformation{Td} <: AbstractTransformation where Td<:Real
     sigma::Vector{Td}
