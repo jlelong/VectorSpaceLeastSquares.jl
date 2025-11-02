@@ -1,5 +1,12 @@
 # VectorSpaceLeastSquares
 
+```@eval
+using ..VectorSpaceLeastSquares
+using Markdown
+v = string(pkgversion(VectorSpaceLeastSquares))
+md"This is the documentation for release $v"
+```
+
 This package aims at computing the least squares approximation within a vector space of functions. It solves the following optimization problem
 
 $$\inf_{\alpha \in \mathbb{R}^d} \sum_{m=1}^M \left(\sum_{i=1}^d \alpha_i g_i\circ\varphi(x_m) - y_m\right)^2$$
