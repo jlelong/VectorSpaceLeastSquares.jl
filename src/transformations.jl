@@ -15,7 +15,7 @@ struct LogTransformation <: AbstractTransformation
     scale::Vector{<:Real}
 end
 
-function apply!(t::LogTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+function apply!(t::LogTransformation, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
     tx .= t.scale .* log.(x)
 end
 
@@ -30,11 +30,11 @@ end
 abstract type AbstractTransformation end
 
 """
-    apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+    apply!(t::AbstractTransformation, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
 
 Apply the transformation `t` to `x` and store the result in `tx`.
 """
-function apply!(t::AbstractTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real}) end
+function apply!(t::AbstractTransformation, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real end
 
 """
     jacobian(t::AbstractTransformation, x::AbstractVector{<:Real}, i::Integer, j::Integer)
@@ -50,7 +50,7 @@ This transformation does nothing.
 """
 struct VoidTransformation <: AbstractTransformation end
 
-function apply!(t::VoidTransformation, tx::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+function apply!(t::VoidTransformation, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
     tx .= x
 end
 
@@ -170,14 +170,14 @@ function GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<
 end
 
 function apply!(t::GaussianTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
-    tx .= cdf.(Normal, (x .- t.mean) ./ t.sigma)
+    tx .= cdf.(Normal(), (x .- t.mean) ./ t.sigma)
 end
 
 function jacobian(t::GaussianTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
     if i != j
         return 0.
     else
-        return pdf(Normal, (x[i] - t.mean[i]) / t.sigma[i]) / t.sigma[i]
+        return pdf(Normal(), (x[i] - t.mean[i]) / t.sigma[i]) / t.sigma[i]
     end
 end
 
@@ -222,13 +222,13 @@ function LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T
 end
 
 function apply!(t::LogNormalTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
-    tx .= cdf.(Normal, (log.(x) .- t.mean) ./ t.sigma)
+    tx .= cdf.(Normal(), (log.(x) .- t.mean) ./ t.sigma)
 end
 
 function jacobian(t::LogNormalTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
     if i != j
         return 0.
     else
-        return pdf(Normal, (log(x[i]) - t.mean[i]) / t.sigma[i]) / (x[i] * t.sigma[i])
+        return pdf(Normal(), (log(x[i]) - t.mean[i]) / t.sigma[i]) / (x[i] * t.sigma[i])
     end
 end
