@@ -85,25 +85,26 @@ Return the scale σ of the linear transformation
 """
 getScale(t::LinearTransformation{<:Real}) = t.scale
 
-function computeStdDevAndMean(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
+"""
+    computeMeanF(x::AbstractVector{<:AbstractVector{T}}, f::Function)
+
+Compute E[f(X)] where `f: R → R` is applied component-wise. Each entry of `x` is supposed to be a sample from the distribution of `X`.
+"""
+function computeMeanF(x::AbstractVector{<:AbstractVector{T}}, f::Function) where T<:Real
     dim = 0
     nSamples = length(x)
     if nSamples >= 1
         dim = length(x[1])
     end
-    center = Vector{T}(undef, dim)
-    squares = Vector{T}(undef, dim)
-    center .= 0
-    squares .= 0
+    m = Vector{T}(undef, dim)
+    m .= 0
     for xi in x
         for j in 1:dim
-            center[j] += xi[j]
-            squares[j] += xi[j] * xi[j]
+            m[j] += f(xi[j])
         end
     end
-    center .= center ./ nSamples
-    squares .= sqrt.((squares ./ nSamples .- center.^2))
-    return (squares, center)
+    m .= m ./ nSamples
+    return m
 end
 """
     LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
@@ -111,7 +112,9 @@ end
 Create a linear transformation by setting α as the empirical mean and σ as the inverse of the empirical standard deviation. Each entry of `x` is supposed to be one sample of the data.
 """
 function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
-    (stdDev, center) = computeStdDevAndMean(x)
+    center = computeMeanF(x, a -> a)
+    stdDev = computeMeanF(x, a -> a * a)
+    stdDev .= stdDev .- center
     LinearTransformation(1. ./ stdDev, center)
 end
 
@@ -160,7 +163,9 @@ getSigma(t::GaussianTransformation{<:Real}) = t.sigma
 Create a Gaussian transformation by setting α as the empirical mean and σ as the empirical standard deviation. Each entry of `x` is supposed to be one sample of the data.
 """
 function GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
-    (stdDev, center) = computeStdDevAndMean(x)
+    center = computeMeanF(x, a -> a)
+    stdDev = computeMeanF(x, a -> a * a)
+    stdDev .= sqrt.(stdDev .- center)
     GaussianTransformation(stdDev, center)
 end
 
@@ -210,7 +215,9 @@ getSigma(t::LogNormalTransformation{<:Real}) = t.sigma
 Create a Log-normal transformation by setting α and σ as the empirical mean and variance of `log(x)` . Each entry of `x` is supposed to be one sample of the data.
 """
 function LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
-    (stdDev, center) = computeStdDevAndMean(log.(x))
+    center = computeMeanF(x, a -> log(a))
+    stdDev = computeMeanF(x, a -> log(a) ^ 2)
+    stdDev .= sqrt.(stdDev .- center)
     LogNormalTransformation(stdDev, center)
 end
 
