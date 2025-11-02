@@ -23,6 +23,10 @@ makedocs(
             "Least Squares problem" => "leastsquares.md",
         ],
         "Examples" => "examples.md",
+        "Reference" => [
+            "Public API" => "public-api.md",
+            "Internal API" => "internal-api.md"
+        ],
         "Release notes" => "release-notes.md"
     ]
 )
