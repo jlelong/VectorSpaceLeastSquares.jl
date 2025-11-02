@@ -92,13 +92,44 @@ end
     @test differentiatePolynomial(Tchebychev, 4, nVariates, partial, x)
 end
 
-@testset "Transformations" begin
+function testLinearTransformation()
+    dim = 3
     nSamples = 50000
     eps = 4. / sqrt(nSamples)
-    x = [randn(5) for i in 1:nSamples]
-    l = LinearTransformation(x)
-    @test all([compeps(l.center[i], 0., eps) for i in 1:length(l.center)])
-    @test all([compeps(l.scale[i], 1., sqrt(3) * eps) for i in 1:length(l.scale)])
+    x = [randn(dim) for i in 1:nSamples]
+    t = LinearTransformation(x)
+    @test all([compeps(t.center[i], 0., eps) for i in 1:length(t.center)])
+    @test all([compeps(t.scale[i], 1., sqrt(3) * eps) for i in 1:length(t.scale)])
+end
+
+function testGaussianTransformation()
+    nSamples = 50000
+    dim = 3
+    mean = 1
+    sigma = 2
+    eps = 4. / sqrt(nSamples)
+    x = [mean .+ sigma .* randn(dim) for i in 1:nSamples]
+    t = GaussianTransformation(x)
+    @test all([compeps(t.mean[i], mean, sigma * eps) for i in 1:length(t.mean)])
+    @test all([compeps(t.sigma[i], sigma, sqrt(3) * sigma^2 * eps) for i in 1:length(t.sigma)])
+end
+
+function testLogNormalTransformation()
+    dim = 3
+    nSamples = 50000
+    mean = 1
+    sigma = 2
+    eps = 4. / sqrt(nSamples)
+    x = [exp.(mean .+ sigma .* randn(dim)) for i in 1:nSamples]
+    t = LogNormalTransformation(x)
+    @test all([compeps(t.mean[i], mean, sigma * eps) for i in 1:length(t.mean)])
+    @test all([compeps(t.sigma[i], sigma, sqrt(3) * sigma^2 * eps) for i in 1:length(t.sigma)])
+end
+
+@testset "Transformations" begin
+    testLinearTransformation()
+    testGaussianTransformation()
+    testLogNormalTransformation()
 end
 
 function testFitVoidTransformationPolynomialBasis(T::Type, eps)
@@ -144,7 +175,6 @@ function testVoidTransformationPiecewiseConstantBasis(T::Type, dim, eps)
     vslsq = VSLeastSquares(PiecewiseConstantBasis(dim, nIntervals), VoidTransformation(), T)
     fit(vslsq, data, y)
     x = rand(T, dim)
-    println(predict(vslsq, x), f(x))
     @test compeps(predict(vslsq, x), f(x), T(eps))
 end
 
