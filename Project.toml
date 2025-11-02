@@ -1,7 +1,7 @@
 name = "VectorSpaceLeastSquares"
 uuid = "75b2bf16-027a-4fc4-b4ae-e959163e71fc"
 authors = ["Jerome Lelong <jerome.lelong@gmail.com>"]
-version = "1.0.0"
+version = "1.1.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
