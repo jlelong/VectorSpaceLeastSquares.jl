@@ -201,12 +201,12 @@ Recursive computation of the first derivative of the Tchebychev polynomials of a
 - `f_n` the derivative of the polynomial of order `n0`.
 - `f_n_1` the derivative of the polynomial of order `n0 - 1`
 """
-function dtchebychev1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n0_1::Real)
+function dtchebychev1d(x::T, n::Integer, n0::Integer, f_n0::T, f_n0_1::T) where T<:Real
     if n == n0
         return f_n0
     else
         save = f_n0
-        f_n0 = 2 * x * Real(n0 + 1) / Real(n0) * (f_n0) - Real(n0 + 1) / Real(n0 - 1) * (f_n0_1)
+        f_n0 = 2 * x * T(n0 + 1) / T(n0) * (f_n0) - T(n0 + 1) / T(n0 - 1) * (f_n0_1)
         f_n0_1 = save
         return dtchebychev1d(x, n, n0 + 1, f_n0, f_n0_1)
     end
