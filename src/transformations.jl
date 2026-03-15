@@ -96,14 +96,13 @@ function computeMeanF(x::AbstractVector{<:AbstractVector{T}}, f::Function) where
     if nSamples >= 1
         dim = length(x[1])
     end
-    m = Vector{T}(undef, dim)
-    m .= 0
+    m = zeros(T, dim)
     for xi in x
         for j in 1:dim
             m[j] += f(xi[j])
         end
     end
-    m .= m ./ nSamples
+    @.(m = m / nSamples)
     return m
 end
 """
@@ -113,8 +112,7 @@ Create a linear transformation by setting α as the empirical mean and σ as the
 """
 function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     center = computeMeanF(x, a -> a)
-    stdDev = computeMeanF(x, a -> a * a)
-    stdDev .= stdDev .- center
+    stdDev = sqrt.(computeMeanF(x, a -> a * a) .- center)
     LinearTransformation(1. ./ stdDev, center)
 end
 
@@ -164,13 +162,12 @@ Create a Gaussian transformation by setting α as the empirical mean and σ as t
 """
 function GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     center = computeMeanF(x, a -> a)
-    stdDev = computeMeanF(x, a -> a * a)
-    stdDev .= sqrt.(stdDev .- center)
+    stdDev = sqrt.(computeMeanF(x, a -> a * a) .- center)
     GaussianTransformation(stdDev, center)
 end
 
 function apply!(t::GaussianTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
-    tx .= cdf.(Normal(), (x .- t.mean) ./ t.sigma)
+    @.(tx = cdf(Normal(), (x - t.mean) / t.sigma))
 end
 
 function jacobian(t::GaussianTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real
@@ -217,12 +214,12 @@ Create a Log-normal transformation by setting α and σ as the empirical mean an
 function LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     center = computeMeanF(x, a -> log(a))
     stdDev = computeMeanF(x, a -> log(a) ^ 2)
-    stdDev .= sqrt.(stdDev .- center)
+    @.(stdDev = sqrt(stdDev - center))
     LogNormalTransformation(stdDev, center)
 end
 
 function apply!(t::LogNormalTransformation{Td}, tx::AbstractVector{Td}, x::AbstractVector{Td}) where Td<:Real
-    tx .= cdf.(Normal(), (log.(x) .- t.mean) ./ t.sigma)
+    @.(tx = cdf(Normal(), (log(x) - t.mean) / t.sigma))
 end
 
 function jacobian(t::LogNormalTransformation{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where Td<:Real

@@ -74,12 +74,9 @@ Solve the least squares problem.
 """
 function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
-    A = Matrix{Td}(undef, length(vslsq), length(vslsq))
-    b = Vector{Td}(undef, length(vslsq))
-    phi_k = Vector{Td}(undef, length(vslsq))
-    A .= 0.
-    b .= 0.
-    phi_k .= 0
+    A = zeros(Td, length(vslsq), length(vslsq))
+    b = zeros(Td, length(vslsq))
+    phi_k = zeros(Td, length(vslsq))
     for i in 1:nSamples
         apply!(vslsq.transformation, getTx(vslsq), x[i])
         for k in 1:length(vslsq)
@@ -158,8 +155,7 @@ Solve the least squares problem using the specific structure of the [`PiecewiseC
 """
 function fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
-    count = Vector{Int64}(undef, length(vslsq))
-    count .= 0
+    count = zeros(Int64, length(vslsq))
     coefficients = getCoefficients(vslsq)
     coefficients .= 0
     for i in 1:nSamples
