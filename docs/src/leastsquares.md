@@ -19,7 +19,7 @@ getBasis(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:Abstra
 An instance of `VSLeastSquares` is typically manipulated using the following methods to solve the least squares problem and compute a prediction
 
 ```@docs
-fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 ```
 

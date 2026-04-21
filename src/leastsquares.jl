@@ -1,3 +1,4 @@
+using LinearAlgebra: I
 using LinearAlgebra.BLAS: ger!
 
 """
@@ -68,11 +69,11 @@ Return the vector internally used to store the transformed data. Internal use on
 getTx(vslsq::VSLeastSquares{Tb, Tt, Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = vslsq._transformed_data
 
 """
-    fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+    fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
 Solve the least squares problem.
 """
-function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
     A = zeros(Td, length(vslsq), length(vslsq))
     b = zeros(Td, length(vslsq))
@@ -85,7 +86,7 @@ function fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVect
         end
         ger!(Td(1.), phi_k, phi_k, A)
     end
-    vslsq.coefficients .= A \ b
+    vslsq.coefficients .= (A + lambda * nSamples * I) \ b
 end
 
 """
@@ -149,11 +150,11 @@ gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:Ab
 #
 
 """
-    fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
+    fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tt<:AbstractTransformation, Td<:Real}
 
 Solve the least squares problem using the specific structure of the [`PiecewiseConstantBasis`](@ref).
 """
-function fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}) where {Tt<:AbstractTransformation, Td<:Real}
+function fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tt<:AbstractTransformation, Td<:Real}
     nSamples = length(x)
     count = zeros(Int64, length(vslsq))
     coefficients = getCoefficients(vslsq)
@@ -166,7 +167,7 @@ function fit(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::AbstractV
             vslsq.coefficients[globalIndex] += y[i]
         end
     end
-    coefficients ./= max.(count, 1)
+    coefficients ./= (max.(count, 1) .+ nSamples * lambda)
 end
 
 """
