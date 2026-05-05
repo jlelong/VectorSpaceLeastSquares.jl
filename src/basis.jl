@@ -63,3 +63,4 @@ isDifferentiable(b::AbstractBasis) = false
 
 include("polynomial.jl")
 include("piecewiseconstant.jl")
+include("kernel.jl")

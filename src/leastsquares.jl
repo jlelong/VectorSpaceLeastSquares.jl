@@ -188,3 +188,32 @@ function predict(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::Abstr
         return 0.
     end
 end
+
+#
+# Specific methods for KernelBasis
+#
+
+"""
+    fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Solve the least squares problem.
+"""
+function fit(vslsq::VSLeastSquares{KernelBasis{Tk, Td}, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, y::AbstractVector{Td}, lambda::Td = Td(0)) where {Tk<:AbstractKernel, Tt<:AbstractTransformation, Td<:Real}
+    @assert length(x) == length(y) "Size mismatch in fit"
+    nSamples = length(x)
+    resize!(vslsq.basis.nodes, length(x))
+    # Create the nodes of the kernels by applying the transformation
+    for i in 1:nSamples
+        vslsq.basis.nodes[i] = Vector{Td}(undef, nVariates(vslsq.basis))
+        apply!(vslsq.transformation, vslsq.basis.nodes[i], x[i])
+    end
+
+    # Solve the least squares problem
+    K = Matrix{Td}(undef, nSamples, nSamples)
+    for i in 1:nSamples
+        for j in 1:nSamples
+            K[i,j] = kernel(Tk, vslsq.basis.nodes[i], vslsq.basis.nodes[j])
+        end
+    end
+    vslsq.coefficients .= (K + lambda * I) \ y
+end
