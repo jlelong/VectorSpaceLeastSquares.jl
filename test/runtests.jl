@@ -3,13 +3,23 @@ using VectorSpaceLeastSquares
 using Test
 using SparseArrays
 
-function compeps(a::Real, b::Real, eps::Real)
-    return abs(b - a) < eps
+function compeps(actual::Real, expected::Real, eps::Real)
+    t = abs(actual - expected) < eps
+    if !t
+        println("expected: $(expected)")
+        println("actual: $(actual)")
+    end
+    return t
 end
 
-function compeps(a::Vector{<:Real}, b::Vector{<:Real}, eps::Real)
-    @assert length(a) == length(b) "a and b must have the same length"
-    return all((compeps(ai, bi, eps) for (ai, bi) in zip(a, b)))
+function compeps(actual::Vector{<:Real}, expected::Vector{<:Real}, eps::Real)
+    @assert length(expected) == length(actual) "both vectors must have the same length"
+    t = all((compeps(ai, bi, eps) for (ai, bi) in zip(expected, actual)))
+    if !t
+        println("expected: $(expected)")
+        println("actual: $(actual)")
+    end
+    return t
 end
 
 function createPolynomial()
@@ -178,10 +188,42 @@ function testVoidTransformationPiecewiseConstantBasis(T::Type, dim, eps)
     @test compeps(predict(vslsq, x), f(x), T(eps))
 end
 
+function testRidgePolynomialBasis(T::Type, eps)
+    dim = 4
+    deg = 5
+    nSamples = 100
+    f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
+    data = [randn(T, dim) for i in 1:nSamples]
+    y = f.(data)
+    vslsq = VSLeastSquares(PolynomialBasis(Hermite, dim, deg), VoidTransformation(), T)
+    alpha = LinRange(0., 0.1, 100)
+    x = randn(T, dim)
+    for a in alpha
+        println(a)
+        fit(vslsq, data, y, T(a))
+        compeps(predict(vslsq, x), f(x), T(eps))
+    end
+    return compeps(predict(vslsq, x), f(x), T(eps))
+end
+
+function testRidgePiecewiseConstantBasis(T::Type, dim, eps)
+    nIntervals = 50
+    nSamples = 1000
+    data = [rand(T, dim) for i in 1:nSamples]
+    f(x) = log(1. + sum(x.^2))
+    y = f.(data)
+    vslsq = VSLeastSquares(PiecewiseConstantBasis(dim, nIntervals), VoidTransformation(), T)
+    fit(vslsq, data, y, T(1.0))
+    x = rand(T, dim)
+    @test compeps(predict(vslsq, x), f(x), T(eps))
+end
+
 @testset "Least squares" begin
     @test testFitVoidTransformationPolynomialBasis(Float32, 1.E-3)
     @test testFitVoidTransformationPolynomialBasis(Float64, 1.E-10)
     testFitLinearTransformationPolynomialBasis(Float64, 1.E-3)
     testVoidTransformationPiecewiseConstantBasis(Float64, 1, 1.E-2)
     testVoidTransformationPiecewiseConstantBasis(Float64, 2, 1.E-2)
+    # @test testRidgePolynomialBasis(Float64, 1E-2)
+    testRidgePiecewiseConstantBasis(Float64, 2, 1E-2)
 end
