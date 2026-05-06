@@ -12,6 +12,7 @@ struct VSLeastSquares{Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
     coefficients::Vector{Td}
     _transformed_data::Vector{Td}
 end
+Base.broadcastable(x::VSLeastSquares) = Ref(x)
 
 """
     VSLeastSquares(basis::Tb, transform::Tt=VoidTransformation(), Td::Type=Float64) where {Tb<:AbstractBasis, Tt<:AbstractTransformation}
@@ -144,6 +145,25 @@ The method [`fit`](@ref) must have been called before.
 """
 gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = [derivative(vslsq, x, i) for i in 1:length(x)]
 
+"""
+    derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variable.
+
+The method [`fit`](@ref) must have been called before.
+"""
+function secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, index1::Integer, index2::Integer) where {Tb<:AbstractBasis, Td<:Real}
+    @assert isDifferentiable(getBasis(vslsq)) "The basis must be differentiable to call `derivative`."
+    val = 0.
+    coefficients = getCoefficients(vslsq)
+    basis = getBasis(vslsq)
+    for i in 1:length(vslsq)
+        c = coefficients[i]
+        dval = secondDerivative(basis, x, i, index1, index2)
+        val += c * dval
+    end
+    return val
+end
 
 #
 # Specific methods for PiecewiseConstantBasis
@@ -202,6 +222,7 @@ function fit(vslsq::VSLeastSquares{KernelBasis{Tk, Td}, Tt, Td}, x::AbstractVect
     @assert length(x) == length(y) "Size mismatch in fit"
     nSamples = length(x)
     resize!(vslsq.basis.nodes, length(x))
+    resize!(vslsq.coefficients, length(x))
     # Create the nodes of the kernels by applying the transformation
     for i in 1:nSamples
         vslsq.basis.nodes[i] = Vector{Td}(undef, nVariates(vslsq.basis))
@@ -212,7 +233,7 @@ function fit(vslsq::VSLeastSquares{KernelBasis{Tk, Td}, Tt, Td}, x::AbstractVect
     K = Matrix{Td}(undef, nSamples, nSamples)
     for i in 1:nSamples
         for j in 1:nSamples
-            K[i,j] = kernel(Tk, vslsq.basis.nodes[i], vslsq.basis.nodes[j])
+            K[i,j] = kernel(vslsq.basis.kernel, vslsq.basis.nodes[i], vslsq.basis.nodes[j])
         end
     end
     vslsq.coefficients .= (K + lambda * I) \ y

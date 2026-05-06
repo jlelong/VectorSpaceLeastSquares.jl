@@ -55,6 +55,16 @@ function derivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer,
 end
 
 """
+    secondDerivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, derivativeIndex1::Integer, derivativeIndex2::Integer)
+
+Compute the value of the first derivative of the `index`-th basis function w.r.t to the `derivativeIndex` variate at point `x`.
+"""
+function secondDerivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, derivativeIndex1::Integer, derivativeIndex2::Integer)
+    error("Basis is not differentiable $getType(B).")
+end
+
+
+"""
     isDifferentiable(b::AbstractBasis)
 
 Return true if the functions in the basis are differentiable. In this case, a specific method [`derivative`](@ref) must be implemented.
