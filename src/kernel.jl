@@ -3,14 +3,14 @@
 """
     AbstractKernel
 
-Abstract kernel structure. A `Kernel` must implement [`kernel`](@ref) and [`dkernel`](@ref)
+Abstract kernel structure. A  concrete `kernel` structure must implement [`kernel`](@ref) and [`dkernel`](@ref).
 """
 abstract type AbstractKernel end
 
 """
     KernelBasis{Tk, Td} <: AbstractBasis where {Tk <: AbstractKernel, Td <: Real}
 
-Kernel basis
+Represent a kernel basis where `Tk` must be a concrete implementation of an `AbstractKernel`.
 """
 struct KernelBasis{Tk, Td} <: AbstractBasis where {Tk <: AbstractKernel, Td <: Real}
     nVariates::Int64
@@ -19,10 +19,9 @@ struct KernelBasis{Tk, Td} <: AbstractBasis where {Tk <: AbstractKernel, Td <: R
 end
 
 """
-    KernelBasis(kernel::Tk, nodes::Vector{Vector{Td}}) where {Tk <: AbstractKernel, Td <: Real}
-
+    KernelBasis(typeTd::Type{<:Real}, kernel::AbstractKernel, nVariates::Integer)
 """
-function KernelBasis(kernel::Tk, typeTd::Type{Td}, nVariates::Integer) where {Tk <: AbstractKernel, Td <: Real}
+function KernelBasis(typeTd::Type{<:Real}, kernel::AbstractKernel, nVariates::Integer)
     nodes = Vector{Vector{typeTd}}(undef, 0)
     KernelBasis(nVariates, nodes, kernel)
 end
@@ -48,7 +47,12 @@ Compute the first derivative w.r.t the `derivativeIndex` coordinate at `x` of th
 function dkernel(k::AbstractKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real}, derivativeIndex::Integer) end
 
 
-struct GaussianKernel <: AbstractKernel 
+"""
+    GaussianKernel
+
+Define a Gaussian kernel
+"""
+struct GaussianKernel <: AbstractKernel
     sigmaSq::Real
 end
 

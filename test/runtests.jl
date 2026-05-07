@@ -277,7 +277,7 @@ function testGPR4BS()
     prices = bsprice.(0., spaceGrid, sigma, r, T, K)
     
     gaussianKernel = GaussianKernel(8.)
-    kernelBasis = KernelBasis(gaussianKernel, Float64, 1)
+    kernelBasis = KernelBasis(Float64, gaussianKernel, 1)
     vslsq = VSLeastSquares(kernelBasis, VoidTransformation(), Float64)
     fit(vslsq, [[x] for x in spaceGrid], prices)
 
@@ -291,6 +291,6 @@ function testGPR4BS()
     @test compeps(predictedGamma, bsgamma.(0., spaceGridTest, sigma, r, T, K), precision)
 end
 
-@testset "CPR via LS regression" begin
+@testset "GPR via LS regression" begin
     testGPR4BS()
 end
