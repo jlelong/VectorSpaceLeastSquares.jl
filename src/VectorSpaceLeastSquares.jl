@@ -12,5 +12,5 @@ export AbstractTransformation, VoidTransformation, apply!, jacobian
 export LinearTransformation, getCenter, getScale
 export GaussianTransformation, LogNormalTransformation, getMean, getSigma
 export VSLeastSquares, fit, predict, derivative, gradient, getCoefficients, getBasis
-export AbstractKernel, KernelBasis, GaussianKernel, kernel, dkernel
+export AbstractKernel, KernelBasis, GaussianKernel, kernel, dkernel, d2kernel
 end

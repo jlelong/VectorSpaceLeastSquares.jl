@@ -20,6 +20,7 @@ makedocs(
         "Manual" => [
             "Transformations" => "transformations.md",
             "Vector space basis" => "basis.md",
+            "Kernel basis" => "kernel.md",
             "Least Squares problem" => "leastsquares.md",
         ],
         "Examples" => "examples.md",

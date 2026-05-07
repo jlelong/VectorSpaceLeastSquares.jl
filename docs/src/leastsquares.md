@@ -2,9 +2,13 @@
 
 Solving a least squares problem of the form
 
-$$\inf_{\alpha \in \mathbb{R}^d} \sum_{m=1}^M \left(\sum_{i=1}^d \alpha_i g_i\circ\varphi(x_m) - y_m\right)^2$$
+$$\inf_{\alpha \in \mathbb{R}^d} \sum_{m=1}^M \left(\sum_{i=1}^d \alpha_i g_i\circ\varphi(x_m) - y_m\right)^2 + \lambda |\alpha|^2$$
 
-is done by creating an instance of `VSLeastSquares`
+or
+
+$$\inf_{\alpha \in \mathbb{R}^M} \sum_{m=1}^M \left(\sum_{i=1}^M \alpha_i K(\varphi(x_i), \varphi(x_m)) - y_m\right)^2 + \lambda |\alpha|^2$$
+
+is done by creating an instance of `VSLeastSquares`.
 
 ```@docs
 VSLeastSquares

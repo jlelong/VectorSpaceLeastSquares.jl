@@ -44,3 +44,6 @@ x = randn(T, dim)
 predict(vslsq, x)
 gradient(vslsq, x)
 ```
+
+## Kernel regression example
+
