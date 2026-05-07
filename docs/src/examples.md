@@ -45,5 +45,33 @@ predict(vslsq, x)
 gradient(vslsq, x)
 ```
 
+## Piecewise constant regression with non prior transformation
+
+```julia
+nIntervals = 50
+nSamples = 100000
+dim = 2
+data = [rand(Float64, dim) for i in 1:nSamples]
+f(x) = log(1. + sum(x.^2))
+y = f.(data)
+vslsq = VSLeastSquares(PiecewiseConstantBasis(dim, nIntervals), VoidTransformation(), Float64)
+fit(vslsq, data, y)
+x = rand(T, dim)
+predict(vslsq, x)
+```
+
 ## Kernel regression example
 
+```julia
+noise = 0.2
+X = range(-5, 5; length=100)
+Y = sin.(X) + noise * randn((100))
+gaussianKernel = GaussianKernel(0.5)
+kernelBasis = KernelBasis(Float64, gaussianKernel, 1)
+vslsq = VSLeastSquares(kernelBasis, VoidTransformation(), Float64)
+XTest = range(-6, 6; length=500)
+fit(vslsq, [[x] for x in X], Y, 0.25)
+predictions = predict.(vslsq, [[x] for x in XTest])
+trueValues = sin.(XTest)
+plot(XTest, [predictions, trueValues], ylims=[-2, 2], label=["prediction" "true value"] )
+```
