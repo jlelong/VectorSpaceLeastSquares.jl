@@ -24,15 +24,35 @@ function compeps(actual::AbstractVector{<:Real}, expected::AbstractVector{<:Real
     return t
 end
 
+function compeps(actual::AbstractMatrix{<:Real}, expected::AbstractMatrix{<:Real}, eps::Real)
+    @assert size(expected) == size(actual) "both matrices must have the same size"
+    t = all((compeps(ai, bi, eps) for (ai, bi) in zip(expected, actual)))
+    if !t
+        println("expected: $(expected)")
+        println("actual: $(actual)")
+    end
+    return t
+end
+
+
 function createPolynomial()
     return getTensor(PolynomialBasis(Canonic, 3, 2)) == sparse([3, 3, 2, 2, 3, 2, 1, 1, 3, 1, 2, 1], [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 8, 9], [1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2], 3, 10)
 end
 
-function testPol1d(degree::Integer, x::Real, func1d::Function)
+function testRecursiveDerivative(degree::Integer, x::Real, func1d::Function)
     @assert degree >= 2 "degree must be >= 2"
     f1 = func1d(x, 1)
     f2 = func1d(x, 2)
     compeps(func1d(x, degree), func1d(x, degree, 2, f2, f1), 1.E-10)
+end
+
+function testRecursiveTchebychevSecondDerivative(degree::Integer, x::Real)
+    @assert degree >= 2 "degree must be >= 2"
+    prime1 = VectorSpaceLeastSquares.dtchebychev1d(x, 1)
+    prime2 = VectorSpaceLeastSquares.dtchebychev1d(x, 2)
+    second1 = VectorSpaceLeastSquares.d2tchebychev1d(x, 1)
+    second2 = VectorSpaceLeastSquares.d2tchebychev1d(x, 2)
+    compeps(VectorSpaceLeastSquares.d2tchebychev1d(x, degree), VectorSpaceLeastSquares.d2tchebychev1d(x, degree, 2, prime2, prime1, second2, second1), 1.E-10)
 end
 
 function evalPolynomial(polType::PolynomialType, degree, nVariates, x::AbstractVector{<:Real})
@@ -65,18 +85,28 @@ end
 
 
 @testset "Evaluate 1d polynomials" begin
-    @test testPol1d(4, 3., VectorSpaceLeastSquares.hermite1d)
-    @test testPol1d(2, 3., VectorSpaceLeastSquares.hermite1d)
-    @test testPol1d(6, 3., VectorSpaceLeastSquares.hermite1d)
-    @test testPol1d(4, 3., VectorSpaceLeastSquares.tchebychev1d)
-    @test testPol1d(2, 3., VectorSpaceLeastSquares.tchebychev1d)
-    @test testPol1d(6, 3., VectorSpaceLeastSquares.tchebychev1d)
+    @test testRecursiveDerivative(4, 3., VectorSpaceLeastSquares.hermite1d)
+    @test testRecursiveDerivative(2, 3., VectorSpaceLeastSquares.hermite1d)
+    @test testRecursiveDerivative(6, 3., VectorSpaceLeastSquares.hermite1d)
+    @test testRecursiveDerivative(4, 3., VectorSpaceLeastSquares.tchebychev1d)
+    @test testRecursiveDerivative(2, 3., VectorSpaceLeastSquares.tchebychev1d)
+    @test testRecursiveDerivative(6, 3., VectorSpaceLeastSquares.tchebychev1d)
 end
 
-@testset "Differentiate 1d polynomials" begin
-    @test testPol1d(4, 3., VectorSpaceLeastSquares.dtchebychev1d)
-    @test testPol1d(2, 3., VectorSpaceLeastSquares.dtchebychev1d)
-    @test testPol1d(6, 3., VectorSpaceLeastSquares.dtchebychev1d)
+@testset "Differentiate 1d Tchebychev polynomials" begin
+    @test testRecursiveDerivative(2, 3., VectorSpaceLeastSquares.dtchebychev1d)
+    @test testRecursiveDerivative(3, 3., VectorSpaceLeastSquares.dtchebychev1d)
+    @test testRecursiveDerivative(4, 3., VectorSpaceLeastSquares.dtchebychev1d)
+    @test testRecursiveDerivative(5, 3., VectorSpaceLeastSquares.dtchebychev1d)
+    @test testRecursiveDerivative(6, 3., VectorSpaceLeastSquares.dtchebychev1d)
+end
+
+@testset "Differentiate 1d Tchebychev polynomials twice" begin
+   @test testRecursiveTchebychevSecondDerivative(3, 2.5)
+   @test testRecursiveTchebychevSecondDerivative(4, 2.5)
+   @test testRecursiveTchebychevSecondDerivative(5, 2.5)
+   @test testRecursiveTchebychevSecondDerivative(6, 2.5)
+   @test testRecursiveTchebychevSecondDerivative(7, 2.5)
 end
 
 
@@ -144,20 +174,7 @@ end
     testLogNormalTransformation()
 end
 
-function testFitVoidTransformationPolynomialBasis(T::Type, eps)
-    dim = 4
-    deg = 3
-    nSamples = 10000
-    f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
-    data = [randn(T, dim) for i in 1:nSamples]
-    y = f.(data)
-    vslsq = VSLeastSquares(PolynomialBasis(Hermite, dim, deg), VoidTransformation(), T)
-    fit(vslsq, data, y)
-    x = randn(T, dim)
-    return compeps(predict(vslsq, x), f(x), T(eps))
-end
-
-function testFitLinearTransformationPolynomialBasis(T::Type, eps)
+function testFitVoidTransformationPolynomialBasis(polType::PolynomialType, T::Type, eps)
     dim = 4
     deg = 3
     nSamples = 10000
@@ -165,17 +182,51 @@ function testFitLinearTransformationPolynomialBasis(T::Type, eps)
     df(x) = [
         - x[4] + 7 * x[3]^2,
         6 * x[2]^2,
-        14 * x[3] * x[1],
+        14 * x[3]^1 * x[1],
         - x[1]
     ]
-    data = [1.0 .+ 2.0 .* randn(T, dim) for i in 1:nSamples]
+    d2f(x) = [
+        0.  0.  14 * x[3]  -1.
+        0.  12 * x[2]  0.  0.
+        14 * x[3]  0.  14 * x[1]  0.
+        -1.  0.  0.  0.
+    ]
+    data = [randn(T, dim) for i in 1:nSamples]
     y = f.(data)
-    transformation = LinearTransformation(data)
-    vslsq = VSLeastSquares(PolynomialBasis(Hermite, dim, deg), transformation, T)
+    vslsq = VSLeastSquares(PolynomialBasis(polType, dim, deg), VoidTransformation(), T)
     fit(vslsq, data, y)
     x = randn(T, dim)
     @test compeps(predict(vslsq, x), f(x), T(eps))
     @test compeps(gradient(vslsq, x), df(x), T(eps))
+    @test compeps(hessian(vslsq, x), d2f(x), T(eps))
+end
+
+function testFitLinearTransformationPolynomialBasis(polType::PolynomialType, T::Type, eps)
+    dim = 4
+    deg = 3
+    nSamples = 10000
+    f(x) = 2 * x[2]^3 - x[1] * x[4] + 7 * x[3]^2 * x[1]
+    df(x) = [
+        - x[4] + 7 * x[3]^2
+        6 * x[2]^2
+        14 * x[3] * x[1]
+        - x[1]
+    ]
+    d2f(x) = [
+        0.  0.  14 * x[3]  -1.
+        0.  12 * x[2]  0.  0.
+        14 * x[3]  0.  14 * x[1]  0.
+        -1.  0.  0.  0.
+    ]
+    data = [1.0 .+ 2.0 .* randn(T, dim) for i in 1:nSamples]
+    y = f.(data)
+    transformation = LinearTransformation(data)
+    vslsq = VSLeastSquares(PolynomialBasis(polType, dim, deg), transformation, T)
+    fit(vslsq, data, y)
+    x = randn(T, dim)
+    @test compeps(predict(vslsq, x), f(x), T(eps))
+    @test compeps(gradient(vslsq, x), df(x), T(eps))
+    @test compeps(hessian(vslsq, x), d2f(x), T(eps))
 end
 
 function testVoidTransformationPiecewiseConstantBasis(T::Type, dim, eps)
@@ -220,14 +271,24 @@ function testRidgePiecewiseConstantBasis(T::Type, dim, eps)
     @test compeps(predict(vslsq, x), f(x), T(eps))
 end
 
-@testset "Least squares" begin
-    @test testFitVoidTransformationPolynomialBasis(Float32, 1.E-3)
-    @test testFitVoidTransformationPolynomialBasis(Float64, 1.E-10)
-    testFitLinearTransformationPolynomialBasis(Float64, 1.E-3)
+@testset "Least squares void transformation with polynomials " begin
+    testFitVoidTransformationPolynomialBasis(Canonic,Float32, 1.E-3)
+    testFitVoidTransformationPolynomialBasis(Canonic, Float64, 1.E-10)
+    testFitVoidTransformationPolynomialBasis(Hermite,Float32, 1.E-3)
+    testFitVoidTransformationPolynomialBasis(Hermite, Float64, 1.E-10)
+    testFitVoidTransformationPolynomialBasis(Tchebychev,Float32, 1.E-3)
+    testFitVoidTransformationPolynomialBasis(Tchebychev, Float64, 1.E-10)
+end
+
+@testset "Least squares void transformation with piecewise constant basis" begin
     testVoidTransformationPiecewiseConstantBasis(Float64, 1, 1.E-2)
     testVoidTransformationPiecewiseConstantBasis(Float64, 2, 1.E-2)
-    # @test testRidgePolynomialBasis(Float64, 1E-2)
-    # testRidgePiecewiseConstantBasis(Float64, 2, 1E-2)
+end
+
+@testset "Least squares linear transformation with polynomials" begin
+    testFitLinearTransformationPolynomialBasis(Canonic, Float64, 1.E-3)
+    testFitLinearTransformationPolynomialBasis(Hermite, Float64, 1.E-3)
+    testFitLinearTransformationPolynomialBasis(Tchebychev, Float64, 1.E-3)
 end
 
 """

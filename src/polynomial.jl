@@ -38,6 +38,7 @@ length(p::PolynomialBasis) = p.size
 getType(p::PolynomialBasis) = p.type
 getTensor(p::PolynomialBasis) = p.tensor
 isDifferentiable(p::PolynomialBasis) = true
+isTwiceDifferentiable(p::PolynomialBasis) = true
 
 """
     computePolynomialTensor(nVariates::Integer, degree::Integer)
@@ -80,7 +81,8 @@ function PolynomialBasis(type::PolynomialType, nVariates::Integer, degree::Integ
 end
 
 canonic1d(x::Real, n::Integer) = x^n
-dcanonic1d(x::Real, n::Integer) = n == 0 ? 0. : x^(n-1)
+dcanonic1d(x::Real, n::Integer) = n == 0 ? 0. : n * x^(n-1)
+d2canonic1d(x::Real, n::Integer) = n <= 1 ? 0. : n * (n - 1) * x^(n-2)
 
 """
 Recursive function to compute Hermite polynomials of any order.
@@ -132,6 +134,7 @@ function hermite1d(x::Real, n::Integer)
 end
 
 dhermite1d(x::Real, n::Integer) = n == 0 ? 0. : n * hermite1d(x, n - 1)
+d2hermite1d(x::Real, n::Integer) = n <= 1 ? 0. : n * (n - 1) * hermite1d(x, n - 2)
 
 """
 Recursive function to compute Tchebychev polynomials of any order.
@@ -198,22 +201,22 @@ Recursive computation of the first derivative of the Tchebychev polynomials of a
 - `x` the evaluation point
 - `n` the order of the polynomial to be evaluated
 - `n0` the rank of initialization
-- `f_n` the derivative of the polynomial of order `n0`.
-- `f_n_1` the derivative of the polynomial of order `n0 - 1`
+- `f_n0` the derivative of the polynomial of order `n0`.
+- `f_n0_1` the derivative of the polynomial of order `n0 - 1`
 """
 function dtchebychev1d(x::T, n::Integer, n0::Integer, f_n0::T, f_n0_1::T) where T<:Real
     if n == n0
         return f_n0
     else
         save = f_n0
-        f_n0 = 2 * x * T(n0 + 1) / T(n0) * (f_n0) - T(n0 + 1) / T(n0 - 1) * (f_n0_1)
+        f_n0 = 2 * x * T(n0 + 1) / T(n0) * f_n0 - T(n0 + 1) / T(n0 - 1) * f_n0_1
         f_n0_1 = save
         return dtchebychev1d(x, n, n0 + 1, f_n0, f_n0_1)
     end
 end
 
 """
-First derivative of the Tchebytchev polynomials
+First derivative of the Tchebychev polynomials
 
 - `x` the evaluation point
 - `n` the index of the polynomial whose first derivative is to be evaluated
@@ -249,6 +252,66 @@ function dtchebychev1d(x::Real, n::Integer)
 end
 
 """
+Recursive computation of the second derivative of the Tchebychev polynomials of any order.
+
+- `x` the evaluation point
+- `n` the order of the polynomial to be evaluated
+- `n0` the rank of initialization
+- `first_n0` the first derivative of the polynomial of order `n0`.
+- `first_n0_1` the first derivative of the polynomial of order `n0 - 1`.
+- `second_n0` the second derivative of the polynomial of order `n0`.
+- `second_n0_1` the second derivative of the polynomial of order `n0 - 1`
+"""
+function d2tchebychev1d(x::T, n::Integer, n0::Integer, first_n0::T, first_n0_1::T, second_n0::T, second_n0_1::T) where T<:Real
+    if n == n0
+        return second_n0
+    else
+        saveFirst = first_n0
+        saveSecond = second_n0
+        # Update second derivative first
+        second_n0 = 2 * x * T(n0 + 1) / T(n0) * second_n0 - T(n0 + 1) / T(n0 - 1) * second_n0_1 + 2 * T(n0 + 1) / T(n0) * first_n0
+        first_n0 = 2 * x * T(n0 + 1) / T(n0) * first_n0 - T(n0 + 1) / T(n0 - 1) * first_n0_1
+        first_n0_1 = saveFirst
+        second_n0_1 = saveSecond
+        return d2tchebychev1d(x, n, n0 + 1, first_n0, first_n0_1, second_n0, second_n0_1)
+    end
+end
+
+"""
+Second derivative of the Tchebychev polynomials
+
+- `x` the evaluation point
+- `n` the index of the polynomial whose first derivative is to be evaluated
+"""
+function d2tchebychev1d(x::Real, n::Integer)
+    if n == 0 || n == 1
+        return 0.
+    elseif n == 2
+        return 4.
+    elseif n == 3
+        return 24. * x
+    elseif n == 4
+        return 96. * x * x - 16.
+    elseif n == 5
+        return (320. * x * x - 120.) * x
+    elseif n == 6
+        x2 = x * x
+        return 960. * x2 * x2 - 576. * x2 + 36
+    elseif n == 7
+        x2 = x * x
+        return (2688. * x2 * x2 - 2240. * x2 + 336) * x
+    else
+        n0 = 7
+        second_n0 = d2tchebychev1d(x, n0)
+        second_n0_1 = d2tchebychev1d(x, n0 - 1)
+        first_n0 = dtchebychev1d(x, n0)
+        first_n0_1 = dtchebychev1d(x, n0 - 1)
+        return d2tchebychev1d(x, n, n0, first_n0, first_n0_1, second_n0, second_n0_1)
+    end
+end
+
+
+"""
     value(polType::PolynomialType, degree::Integer, x::Real)
 
 Evaluate a 1d polynomial of type `polType` and degree `degree` at `x`
@@ -277,6 +340,23 @@ function derivative(polType::PolynomialType, degree::Integer, x::Real)
         return dhermite1d(x, degree)
     elseif polType == Tchebychev
         return dtchebychev1d(x, degree)
+    else
+        error("Unknown polynomial type: $polType")
+    end
+end
+
+"""
+    secondDerivative(polType::PolynomialType, degree::Integer, x::Real)
+
+Evaluate the second derivative of a 1d polynomial of type `polType` and degree `degree` at `x`
+"""
+function secondDerivative(polType::PolynomialType, degree::Integer, x::Real)
+    if polType == Canonic
+        return d2canonic1d(x, degree)
+    elseif polType == Hermite
+        return d2hermite1d(x, degree)
+    elseif polType == Tchebychev
+        return d2tchebychev1d(x, degree)
     else
         error("Unknown polynomial type: $polType")
     end
@@ -322,3 +402,29 @@ function derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, der
     return val
 end
 
+"""
+    secondDerivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex1::Ti, derivativeIndex2::Ti) where {Td<:Real, Ti<:Integer}
+
+Evaluate the second partial derivative w.r.t variables `derivativeIndex1` and  `derivativeIndex2` of the `polIndex`-th member of the polynomial basis `p`
+"""
+function secondDerivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex1::Ti, derivativeIndex2::Ti) where {Td<:Real, Ti<:Integer}
+    T = getTensor(p)
+    if T[derivativeIndex1, polIndex] == 0 || T[derivativeIndex2, polIndex] == 0 || ((derivativeIndex1 == derivativeIndex2) && T[derivativeIndex2, polIndex] == 1)
+        return 0.
+    end
+    val = 1.
+    for r in nzrange(T, polIndex)
+        n = rowvals(T)[r]
+        deg = nonzeros(T)[r]
+        if n == derivativeIndex1 || n == derivativeIndex2
+            if derivativeIndex2 == derivativeIndex1
+                val *= secondDerivative(getType(p), deg, x[n])
+            else
+                val *= derivative(getType(p), deg, x[n])
+            end
+        else
+            val *= value(getType(p), deg, x[n])
+        end
+    end
+    return val
+end

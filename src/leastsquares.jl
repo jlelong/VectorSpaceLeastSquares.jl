@@ -137,6 +137,48 @@ function derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, in
 end
 
 """
+    derivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Td<:Real}
+
+Compute the partial derivative of the prediction w.r.t to the `index` variable for a [`VoidTransformation`](@ref).
+
+The method [`fit`](@ref) must have been called before.
+"""
+function derivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Td<:Real}
+    @assert isDifferentiable(getBasis(vslsq)) "The basis must be differentiable to call `derivative`."
+    val = 0.
+    coefficients = getCoefficients(vslsq)
+    basis = getBasis(vslsq)
+    apply!(vslsq.transformation, getTx(vslsq), x)
+    for i in 1:length(vslsq)
+        di = derivative(basis, getTx(vslsq), i, index)
+        c = coefficients[i]
+        val += c * di
+    end
+    return val
+end
+
+"""
+    derivative(vslsq::VSLeastSquares{Tb, LinearTransformation, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Td<:Real}
+
+Compute the partial derivative of the prediction w.r.t to the `index` variable for a linear transformation.
+
+The method [`fit`](@ref) must have been called before.
+"""
+function derivative(vslsq::VSLeastSquares{Tb, LinearTransformation{Td}, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Td<:Real}
+    @assert isDifferentiable(getBasis(vslsq)) "The basis must be differentiable to call `derivative`."
+    val = 0.
+    coefficients = getCoefficients(vslsq)
+    basis = getBasis(vslsq)
+    apply!(vslsq.transformation, getTx(vslsq), x)
+    for i in 1:length(vslsq)
+        di = derivative(basis, getTx(vslsq), i, index) * vslsq.transformation.scale[index]
+        c = coefficients[i]
+        val += c * di
+    end
+    return val
+end
+
+"""
     gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
 Compute the gradient of the prediction at `x`.
@@ -146,24 +188,55 @@ The method [`fit`](@ref) must have been called before.
 gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = [derivative(vslsq, x, i) for i in 1:length(x)]
 
 """
-    derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+    secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
 
-Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variable.
+Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variable for a void transformation.
 
 The method [`fit`](@ref) must have been called before.
 """
 function secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, index1::Integer, index2::Integer) where {Tb<:AbstractBasis, Td<:Real}
-    @assert isDifferentiable(getBasis(vslsq)) "The basis must be differentiable to call `derivative`."
+    @assert isTwiceDifferentiable(getBasis(vslsq)) "The basis must be twice differentiable to call `derivative`."
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
     for i in 1:length(vslsq)
         c = coefficients[i]
-        dval = secondDerivative(basis, x, i, index1, index2)
-        val += c * dval
+        ddi = secondDerivative(basis, x, i, index1, index2)
+        val += c * ddi
     end
     return val
 end
+
+"""
+    secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
+
+Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variable.
+
+The method [`fit`](@ref) must have been called before.
+"""
+function secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation{Td}, Td}, x::AbstractVector{Td}, index1::Integer, index2::Integer) where {Tb<:AbstractBasis, Td<:Real}
+    @assert isTwiceDifferentiable(getBasis(vslsq)) "The basis must be twice differentiable to call `derivative`."
+    val = 0.
+    coefficients = getCoefficients(vslsq)
+    apply!(vslsq.transformation, getTx(vslsq), x)
+    basis = getBasis(vslsq)
+    for i in 1:length(vslsq)
+        c = coefficients[i]
+        ddi = secondDerivative(basis, getTx(vslsq), i, index1, index2) * vslsq.transformation.scale[index1] * vslsq.transformation.scale[index2]
+        val += c * ddi
+    end
+    return val
+end
+
+"""
+    hessian(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+
+Compute the hessian of the prediction at `x`.
+
+The method [`fit`](@ref) must have been called before.
+"""
+hessian(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real} = [secondDerivative(vslsq, x, i, j) for i in 1:length(x), j in 1:length(x)]
+
 
 #
 # Specific methods for PiecewiseConstantBasis

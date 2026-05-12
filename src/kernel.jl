@@ -30,6 +30,7 @@ nVariates(p::KernelBasis) = p.nVariates
 length(p::KernelBasis) = length(p.nodes)
 getType(p::KernelBasis) = p.type
 isDifferentiable(p::KernelBasis) = true
+isTwiceDifferentiable(p::KernelBasis) = true
 
 
 """

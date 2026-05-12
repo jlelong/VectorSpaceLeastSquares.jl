@@ -40,6 +40,7 @@ nVariates(p::PiecewiseConstantBasis) = p.nVariates
 length(p::PiecewiseConstantBasis) = p.size
 getType(p::PiecewiseConstantBasis) = "PiecewiseConstantBasis"
 isDifferentiable(p::PiecewiseConstantBasis) = false
+isTwiceDifferentiable(p::PiecewiseConstantBasis) = false
 
 """
     computeGlobalIndex(p::PiecewiseConstantBasis, x::AbstractVector{<:Real})

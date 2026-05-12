@@ -63,13 +63,13 @@ function secondDerivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::In
     error("Basis is not differentiable $getType(B).")
 end
 
-
 """
     isDifferentiable(b::AbstractBasis)
 
 Return true if the functions in the basis are differentiable. In this case, a specific method [`derivative`](@ref) must be implemented.
 """
 isDifferentiable(b::AbstractBasis) = false
+isTwiceDifferentiable(b::AbstractBasis) = false
 
 include("polynomial.jl")
 include("piecewiseconstant.jl")
