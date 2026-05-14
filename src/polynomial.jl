@@ -104,6 +104,12 @@ function hermite1d(x::Real, n::Integer, n0::Integer, f_n0::Real, f_n0_1::Real)
     end
 end
 
+"""
+Hermite polynomials of any order
+
+- `x` the evaluation point
+- `n` the order of the polynomial to be evaluated
+"""
 function hermite1d(x::Real, n::Integer)
     if n == 0
         return 1
@@ -133,7 +139,20 @@ function hermite1d(x::Real, n::Integer)
     end
 end
 
+"""
+First derivative of Hermite polynomials of any order
+
+- `x` the evaluation point
+- `n` the order of the polynomial to be evaluated
+"""
 dhermite1d(x::Real, n::Integer) = n == 0 ? 0. : n * hermite1d(x, n - 1)
+
+"""
+Second derivative of Hermite polynomials of any order
+
+- `x` the evaluation point
+- `n` the order of the polynomial to be evaluated
+"""
 d2hermite1d(x::Real, n::Integer) = n <= 1 ? 0. : n * (n - 1) * hermite1d(x, n - 2)
 
 """

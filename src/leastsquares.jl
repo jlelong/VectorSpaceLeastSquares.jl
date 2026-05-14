@@ -208,7 +208,7 @@ function secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::
 end
 
 """
-    secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation{Td}, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
+    secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
 
 Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variables for a linear transformation.
 
