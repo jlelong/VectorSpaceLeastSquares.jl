@@ -403,11 +403,11 @@ function derivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, der
 end
 
 """
-    secondDerivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex1::Ti, derivativeIndex2::Ti) where {Td<:Real, Ti<:Integer}
+    secondDerivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, i1::Ti, i2::Ti) where {Td<:Real, Ti<:Integer}
 
-Evaluate the second partial derivative w.r.t variables `derivativeIndex1` and  `derivativeIndex2` of the `polIndex`-th member of the polynomial basis `p`
+Evaluate the second partial derivative w.r.t variables `i1, i2` of the `polIndex`-th member of the polynomial basis `p`
 """
-function secondDerivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Ti, derivativeIndex1::Ti, derivativeIndex2::Ti) where {Td<:Real, Ti<:Integer}
+function secondDerivative(p::PolynomialBasis, x::AbstractVector{Td}, polIndex::Integer, derivativeIndex1::Integer, derivativeIndex2::Integer) where {Td<:Real}
     T = getTensor(p)
     if T[derivativeIndex1, polIndex] == 0 || T[derivativeIndex2, polIndex] == 0 || ((derivativeIndex1 == derivativeIndex2) && T[derivativeIndex2, polIndex] == 1)
         return 0.

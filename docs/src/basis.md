@@ -9,8 +9,10 @@ length(b::AbstractBasis)
 size(b::AbstractBasis)
 getType(b::AbstractBasis)
 isDifferentiable(b::AbstractBasis)
+isTwiceDifferentiable(b::AbstractBasis)
 value(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer)
-derivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, derivativeIndex::Integer)
+derivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, i::Integer)
+secondDerivative(b::AbstractBasis, x::AbstractVector{<:Real}, index::Integer, i1::Integer, i2::Integer)
 ```
 
 ## Polynomial Bases

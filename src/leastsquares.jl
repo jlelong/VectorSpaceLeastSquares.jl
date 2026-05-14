@@ -190,7 +190,7 @@ gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:Ab
 """
     secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
 
-Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variable for a void transformation.
+Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variables for a void transformation.
 
 The method [`fit`](@ref) must have been called before.
 """
@@ -208,9 +208,9 @@ function secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::
 end
 
 """
-    secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
+    secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation{Td}, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
 
-Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variable.
+Compute the second order partial derivative of the prediction w.r.t to the `(i,j)` variables for a linear transformation.
 
 The method [`fit`](@ref) must have been called before.
 """
@@ -231,7 +231,7 @@ end
 """
     hessian(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 
-Compute the hessian of the prediction at `x`.
+Compute the hessian of the prediction at `x`. It only works if the transformation `Tt` is a void or a linear transformation.
 
 The method [`fit`](@ref) must have been called before.
 """

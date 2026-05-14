@@ -27,9 +27,17 @@ fit(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{<:AbstractVector{Td}}, 
 predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 ```
 
-If the underlying basis of type `Tb` is differentiable the derivative of the prediction can be computed using
+If the underlying basis of type `Tb` is differentiable, the derivative of the prediction can be computed using
 
 ```@docs
 derivative(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}, index::Integer) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 gradient(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
+```
+
+If the underlying basis of type `Tb` is twice differentiable, the second derivative of the prediction can be computed using
+
+```@docs
+secondDerivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
+secondDerivative(vslsq::VSLeastSquares{Tb, LinearTransformation{Td}, Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Tb<:AbstractBasis, Td<:Real}
+hessian(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where {Tb<:AbstractBasis, Tt<:AbstractTransformation, Td<:Real}
 ```

@@ -108,9 +108,9 @@ function derivative(b::KernelBasis{Tk, Td}, x::AbstractVector{Td}, index::Intege
 end
 
 """
-    secondDerivative(b::KernelBasis{<:AbstractKernel, <:Real}, x::AbstractVector{<:Real}, index::Integer, derivativeIndex1::Integer, derivativeIndex2::Integer)
+    secondDerivative(b::KernelBasis{<:AbstractKernel, <:Real}, x::AbstractVector{<:Real}, index::Integer, i1::Integer, i2::Integer)
 
-Compute the value of the first derivative of the `index`-th basis function w.r.t to the `derivativeIndex` variate at point `x`.
+Compute the value of the second derivative of the `index`-th basis function w.r.t to the `i1, i2` variates at point `x`.
 """
 function secondDerivative(b::KernelBasis{<:AbstractKernel, <:Real}, x::AbstractVector{<:Real}, index::Integer, derivativeIndex1::Integer, derivativeIndex2::Integer)
     return d2kernel(b.kernel, b.nodes[index], x, derivativeIndex1, derivativeIndex2)
