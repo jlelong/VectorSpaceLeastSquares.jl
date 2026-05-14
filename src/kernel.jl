@@ -53,8 +53,8 @@ function dkernel(k::AbstractKernel, node::AbstractVector{<:Real}, x::AbstractVec
 
 Define a Gaussian kernel
 """
-struct GaussianKernel <: AbstractKernel
-    sigmaSq::Real
+struct GaussianKernel{Td} <: AbstractKernel  where {Td<:Real} 
+    sigmaSq::Td
 end
 
 """
@@ -62,8 +62,12 @@ end
 
 Compute the value at `x` of the Gaussian kernel centered at `node`.
 """
-function kernel(k::GaussianKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real})
-    return exp(-0.5 * sum((node .- x).^2 / k.sigmaSq)) / (2 * pi * k.sigmaSq)^(0.5 * length(node))
+function kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}) where {Td<:Real}
+    norm2 = 0.
+    for i in 1:length(node)
+        norm2 += (node[i] - x[i])^2
+    end
+    return exp(-0.5  / k.sigmaSq * norm2) / (2 * pi * k.sigmaSq)^(0.5 * length(node))
 end
 
 """
