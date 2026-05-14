@@ -58,7 +58,7 @@ struct GaussianKernel{Td} <: AbstractKernel  where {Td<:Real}
 end
 
 """
-    kernel(k::GaussianKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real})
+    kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}) where {Td<:Real}
 
 Compute the value at `x` of the Gaussian kernel centered at `node`.
 """
@@ -71,20 +71,20 @@ function kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVect
 end
 
 """
-    dkernel(k::GaussianKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real}, derivativeIndex::Integer)
+    dkernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, derivativeIndex::Integer) where {Td<:Real}
 
 Compute the first derivative w.r.t the `derivativeIndex` coordinate at `x` of the Gaussian kernel centered at `node`.
 """
-function dkernel(k::GaussianKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real}, derivativeIndex::Integer)
+function dkernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, derivativeIndex::Integer) where {Td<:Real}
     return - (x[derivativeIndex] - node[derivativeIndex]) / k.sigmaSq * kernel(k, node, x)
 end
 
 """
-    d2kernel(k::GaussianKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real}, derivativeIndex1::Integer, derivativeIndex2::Integer)
+    d2kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, derivativeIndex1::Integer, derivativeIndex2::Integer) where {Td<:Real}
 
 Compute the second derivative w.r.t the (`derivativeIndex1`,`derivativeIndex2`)  coordinates at `x` of the Gaussian kernel centered at `node`.
 """
-function d2kernel(k::GaussianKernel, node::AbstractVector{<:Real}, x::AbstractVector{<:Real}, derivativeIndex1::Integer, derivativeIndex2::Integer)
+function d2kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, derivativeIndex1::Integer, derivativeIndex2::Integer) where {Td<:Real}
     term1 = (x[derivativeIndex1] - node[derivativeIndex1]) * (x[derivativeIndex2] - node[derivativeIndex2]) / k.sigmaSq^2 * kernel(k, node, x)
     if derivativeIndex2 == derivativeIndex1
         term1 += - 1. / k.sigmaSq * kernel(k, node, x)
