@@ -101,9 +101,14 @@ function predict(vslsq::VSLeastSquares{Tb, Tt, Td}, x::AbstractVector{Td}) where
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
-    apply!(vslsq.transformation, getTx(vslsq), x)
+    if isa(vslsq.transformation, VoidTransformation)
+        tx = x
+    else
+        tx = getTx(vslsq)
+        apply!(vslsq.transformation, tx, x)
+    end
     for i in 1:length(vslsq)
-        v = value(basis, getTx(vslsq), i)
+        v = value(basis, tx, i)
         c = coefficients[i]
         val += c * v
     end
@@ -148,9 +153,8 @@ function derivative(vslsq::VSLeastSquares{Tb, VoidTransformation, Td}, x::Abstra
     val = 0.
     coefficients = getCoefficients(vslsq)
     basis = getBasis(vslsq)
-    apply!(vslsq.transformation, getTx(vslsq), x)
     for i in 1:length(vslsq)
-        di = derivative(basis, getTx(vslsq), i, index)
+        di = derivative(basis, x, i, index)
         c = coefficients[i]
         val += c * di
     end
@@ -281,6 +285,7 @@ function predict(vslsq::VSLeastSquares{PiecewiseConstantBasis, Tt, Td}, x::Abstr
         return 0.
     end
 end
+
 
 #
 # Specific methods for KernelBasis
