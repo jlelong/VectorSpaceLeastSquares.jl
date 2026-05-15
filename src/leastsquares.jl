@@ -1,4 +1,4 @@
-using LinearAlgebra: I
+using LinearAlgebra: I, cholesky!
 using LinearAlgebra.BLAS: ger!
 
 """
@@ -310,9 +310,11 @@ function fit(vslsq::VSLeastSquares{KernelBasis{Tk, Td}, Tt, Td}, x::AbstractVect
     # Solve the least squares problem
     K = Matrix{Td}(undef, nSamples, nSamples)
     for i in 1:nSamples
-        for j in 1:nSamples
+        for j in 1:i
             K[i,j] = kernel(vslsq.basis.kernel, vslsq.basis.nodes[i], vslsq.basis.nodes[j])
+            K[j,i] = K[i, j]
         end
     end
-    vslsq.coefficients .= (K + lambda * I) \ y
+    K += lambda * I
+    vslsq.coefficients .= K \ y
 end
