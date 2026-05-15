@@ -58,7 +58,7 @@ struct GaussianKernel{Td} <: AbstractKernel  where {Td<:Real}
     normalisation::Td
 end
 
-GaussianKernel(sigma::Td) where {Td<:Real} = GaussianKernel(sigma, 2 * pi * sigma^2)
+GaussianKernel(sigma::Td) where {Td<:Real} = GaussianKernel(sigma, sqrt(2 * pi * sigma^2))
 
 """
     kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}) where {Td<:Real}
@@ -70,7 +70,7 @@ function kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVect
     for i in 1:length(node)
         norm2 += (node[i] - x[i])^2
     end
-    return exp(-0.5  / k.sigmaSq * norm2) / (2 * pi * k.sigmaSq)^(0.5 * length(node))
+    return exp(-0.5  / k.sigmaSq * norm2) / k.normalisation^(length(node))
 end
 
 """
