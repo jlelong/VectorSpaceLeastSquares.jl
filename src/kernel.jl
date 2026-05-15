@@ -85,11 +85,11 @@ end
 Compute the second derivative w.r.t the (`derivativeIndex1`,`derivativeIndex2`)  coordinates at `x` of the Gaussian kernel centered at `node`.
 """
 function d2kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, derivativeIndex1::Integer, derivativeIndex2::Integer) where {Td<:Real}
-    term1 = (x[derivativeIndex1] - node[derivativeIndex1]) * (x[derivativeIndex2] - node[derivativeIndex2]) / k.sigmaSq^2 * kernel(k, node, x)
+    d = (x[derivativeIndex1] - node[derivativeIndex1]) * (x[derivativeIndex2] - node[derivativeIndex2]) / k.sigmaSq^2
     if derivativeIndex2 == derivativeIndex1
-        term1 += - 1. / k.sigmaSq * kernel(k, node, x)
+        d += - 1. / k.sigmaSq
     end
-    return term1
+    return d * kernel(k, node, x)
 end
 
 
