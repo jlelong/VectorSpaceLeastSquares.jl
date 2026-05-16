@@ -53,9 +53,12 @@ function dkernel(k::AbstractKernel, node::AbstractVector{<:Real}, x::AbstractVec
 
 Define a Gaussian kernel
 """
-struct GaussianKernel{Td} <: AbstractKernel  where {Td<:Real} 
+struct GaussianKernel{Td} <: AbstractKernel  where {Td<:Real}
     sigmaSq::Td
+    normalisation::Td
 end
+
+GaussianKernel(sigma::Td) where {Td<:Real} = GaussianKernel(sigma, sqrt(2 * pi * sigma^2))
 
 """
     kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}) where {Td<:Real}
@@ -67,7 +70,7 @@ function kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVect
     for i in 1:length(node)
         norm2 += (node[i] - x[i])^2
     end
-    return exp(-0.5  / k.sigmaSq * norm2) / (2 * pi * k.sigmaSq)^(0.5 * length(node))
+    return exp(-0.5  / k.sigmaSq * norm2) / k.normalisation^(length(node))
 end
 
 """
@@ -85,11 +88,11 @@ end
 Compute the second derivative w.r.t the (`derivativeIndex1`,`derivativeIndex2`)  coordinates at `x` of the Gaussian kernel centered at `node`.
 """
 function d2kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, derivativeIndex1::Integer, derivativeIndex2::Integer) where {Td<:Real}
-    term1 = (x[derivativeIndex1] - node[derivativeIndex1]) * (x[derivativeIndex2] - node[derivativeIndex2]) / k.sigmaSq^2 * kernel(k, node, x)
+    d = (x[derivativeIndex1] - node[derivativeIndex1]) * (x[derivativeIndex2] - node[derivativeIndex2]) / k.sigmaSq
     if derivativeIndex2 == derivativeIndex1
-        term1 += - 1. / k.sigmaSq * kernel(k, node, x)
+        d -= 1.
     end
-    return term1
+    return d / k.sigmaSq * kernel(k, node, x)
 end
 
 
