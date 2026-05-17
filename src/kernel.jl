@@ -51,14 +51,19 @@ function dkernel(k::AbstractKernel, node::AbstractVector{<:Real}, x::AbstractVec
 """
     GaussianKernel
 
-Define a Gaussian kernel
+Define Gaussian kernel
 """
 struct GaussianKernel{Td} <: AbstractKernel  where {Td<:Real}
     sigmaSq::Td
     normalisation::Td
 end
 
-GaussianKernel(sigma::Td) where {Td<:Real} = GaussianKernel(sigma, sqrt(2 * pi * sigma^2))
+"""
+    GaussianKernel(sigmaSq::Td) where {Td<:Real}
+
+Create a Gaussian kernel with variance `sigmaSq`.
+"""
+GaussianKernel(sigmaSq::Td) where {Td<:Real} = GaussianKernel(sigmaSq, sqrt(2 * pi * sigmaSq))
 
 """
     kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}) where {Td<:Real}

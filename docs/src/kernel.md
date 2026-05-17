@@ -24,6 +24,7 @@ $$K(x,y) = \frac{1}{(2 \pi \sigma^2)^{d/2}} e^{-\frac{|x - y|^2}{2 \sigma^2}}.$$
 
 ```@docs
 GaussianKernel
+GaussianKernel(sigmaSq::Td) where {Td<:Real}
 kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}) where {Td<:Real}
 dkernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, i::Integer) where {Td<:Real}
 d2kernel(k::GaussianKernel{Td}, node::AbstractVector{Td}, x::AbstractVector{Td}, i::Integer, j::Integer) where {Td<:Real}
