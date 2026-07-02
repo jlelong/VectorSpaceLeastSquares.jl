@@ -64,7 +64,9 @@ end
 """
     LinearTransformation{Td} <: AbstractTransformation where Td<:Real
 
-Implement a linear transformation of the data defined by ``\\varphi(x) = (x - \\alpha) * \\sigma`` 
+Implement a linear transformation of the data defined by ``\\varphi(x) = (x - center) * scale``
+
+LinearTransformation(scale, center)
 """
 struct LinearTransformation{Td} <: AbstractTransformation where Td<:Real
     scale::Vector{Td}
@@ -74,14 +76,14 @@ end
 """
     getCenter(t::LinearTransformation{<:Real})
 
-Return the center α of the linear transformation
+Return the center of the linear transformation
 """
 getCenter(t::LinearTransformation{<:Real}) = t.center
 
 """
     getScale(t::LinearTransformation{<:Real}) = t.scale
 
-Return the scale σ of the linear transformation
+Return the scale of the linear transformation
 """
 getScale(t::LinearTransformation{<:Real}) = t.scale
 
@@ -135,6 +137,8 @@ end
     GaussianTransformation{Td} <: AbstractTransformation where Td<:Real
 
 Implement an Gaussian transformation of the data defined by ``\\varphi(x) = N((x - \\alpha) / \\sigma)`` where ``N`` is the cdf of the standard Gaussian distribution
+
+GaussianTransformation(sigma, mean)
 """
 struct GaussianTransformation{Td} <: AbstractTransformation where Td<:Real
     sigma::Vector{Td}
@@ -186,6 +190,8 @@ end
     LogNormalTransformation{Td} <: AbstractTransformation where Td<:Real
 
 Implement a Log-normal transformation of the data defined by ``\\varphi(x) = N((\\log(x) - \\alpha) / \\sigma)`` where ``N`` is the cdf of the standard Gaussian distribution.
+
+LogNormalTransformation(sigma, mean)
 """
 struct LogNormalTransformation{Td} <: AbstractTransformation where Td<:Real
     sigma::Vector{Td}
