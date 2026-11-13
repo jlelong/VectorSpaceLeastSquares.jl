@@ -136,12 +136,14 @@ end
 
 function testLinearTransformation()
     dim = 3
+    center = [1., 2., 3.]
+    stddev = 2.
     nSamples = 50000
     eps = 4. / sqrt(nSamples)
-    x = [randn(dim) for i in 1:nSamples]
+    x = [center .+ stddev .* randn(dim) for i in 1:nSamples]
     t = LinearTransformation(x)
-    @test all([compeps(t.center[i], 0., eps) for i in 1:length(t.center)])
-    @test all([compeps(t.scale[i], 1., sqrt(3) * eps) for i in 1:length(t.scale)])
+    @test all([compeps(t.center[i], center[i], eps) for i in 1:length(t.center)])
+    @test all([compeps(t.scale[i], 1. / stddev, sqrt(3.) * eps) for i in 1:length(t.scale)])
 end
 
 function testGaussianTransformation()

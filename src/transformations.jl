@@ -114,7 +114,7 @@ Create a linear transformation by setting α as the empirical mean and σ as the
 """
 function LinearTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     center = computeMeanF(x, a -> a)
-    stdDev = sqrt.(computeMeanF(x, a -> a * a) .- center)
+    stdDev = sqrt.(computeMeanF(x, a -> a * a) .- center .* center)
     LinearTransformation(1. ./ stdDev, center)
 end
 
