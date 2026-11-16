@@ -33,7 +33,7 @@ Create a `PiecewiseConstantBasis` by specifying the number of intervals per dire
 """
 function PiecewiseConstantBasis(nVariates::Integer, nIntervals::Vector{<:Integer})
     size = prod(nIntervals)
-    return PiecewiseConstantBasis(nVariates, nIntervalsVect, size)
+    return PiecewiseConstantBasis(nVariates, nIntervals, size)
 end
 
 nVariates(p::PiecewiseConstantBasis) = p.nVariates
