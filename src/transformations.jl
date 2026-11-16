@@ -166,7 +166,7 @@ Create a Gaussian transformation by setting α as the empirical mean and σ as t
 """
 function GaussianTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     center = computeMeanF(x, a -> a)
-    stdDev = sqrt.(computeMeanF(x, a -> a * a) .- center)
+    stdDev = sqrt.(computeMeanF(x, a -> a * a) .- center .* center)
     GaussianTransformation(stdDev, center)
 end
 
@@ -220,7 +220,7 @@ Create a Log-normal transformation by setting α and σ as the empirical mean an
 function LogNormalTransformation(x::AbstractVector{<:AbstractVector{T}}) where T<:Real
     center = computeMeanF(x, a -> log(a))
     stdDev = computeMeanF(x, a -> log(a) ^ 2)
-    @.(stdDev = sqrt(stdDev - center))
+    @.(stdDev = sqrt(stdDev - center * center))
     LogNormalTransformation(stdDev, center)
 end
 
